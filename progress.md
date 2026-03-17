@@ -1,5 +1,22 @@
 # INNEED — Progress
 
+## Sprint 1 ✅
+
+**Status:** Complete
+**Date:** 2026-03-18
+
+### Completed
+- POST /auth/otp/request + /auth/otp/verify (mock SMS, user upsert)
+- POST /auth/register, /auth/login (bcrypt), /auth/google
+- JWT httpOnly cookies: access_token (15min) + refresh_token (7d) with rotation
+- POST /auth/refresh, GET /auth/me, POST /auth/logout
+- POST /vendor/onboarding + presigned URL (R2)
+- GET /admin/vendors/pending, approve/reject
+- Frontend: Login (OTP + email tabs), Signup, Vendor 4-step wizard, Admin approvals
+- Next.js middleware route guards
+
+---
+
 ## Sprint 0 ✅
 
 **Status:** Complete
