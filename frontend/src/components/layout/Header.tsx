@@ -3,12 +3,22 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Bell, User, LogOut, Search } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/context/AuthContext'
+import api from '@/lib/api'
 import { toast } from 'sonner'
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth()
   const router = useRouter()
+
+  const { data: notifData } = useQuery({
+    queryKey: ['notif-count'],
+    queryFn: () => api.get('/notifications/unread-count').then(r => r.data as { count: number }),
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+  })
+  const unreadCount = notifData?.count ?? 0
 
   const handleLogout = async () => {
     await logout()
@@ -39,8 +49,13 @@ export default function Header() {
               <Link href="/cart" className="p-2 hover:bg-accent rounded-lg">
                 <ShoppingCart className="h-5 w-5" />
               </Link>
-              <Link href="/notifications" className="p-2 hover:bg-accent rounded-lg">
+              <Link href="/notifications" className="relative p-2 hover:bg-accent rounded-lg">
                 <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </Link>
               {user?.isVendorApproved && (
                 <Link href="/vendor/dashboard" className="text-sm font-medium text-primary hover:underline">
@@ -61,6 +76,7 @@ export default function Header() {
                   <Link href="/profile" className="block px-4 py-2 text-sm hover:bg-accent">Profile</Link>
                   <Link href="/orders" className="block px-4 py-2 text-sm hover:bg-accent">My Orders</Link>
                   <Link href="/rentals" className="block px-4 py-2 text-sm hover:bg-accent">My Rentals</Link>
+                  <Link href="/saved" className="block px-4 py-2 text-sm hover:bg-accent">Saved Items</Link>
                   <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm hover:bg-accent flex items-center gap-2 text-destructive">
                     <LogOut className="h-4 w-4" /> Sign out
                   </button>

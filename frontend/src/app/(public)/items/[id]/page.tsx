@@ -2,10 +2,10 @@
 
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Star, MapPin, Shield } from 'lucide-react'
+import { ShoppingCart, Star, MapPin, Shield, Heart } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatINR, formatDate } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 export default function ItemDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { isAuthenticated } = useAuth()
+  const qc = useQueryClient()
   const [selectedImage, setSelectedImage] = useState(0)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -22,6 +23,22 @@ export default function ItemDetailPage() {
   const { data: listing, isLoading } = useQuery({
     queryKey: ['listing', id],
     queryFn: () => api.get(`/listings/${id}`).then(r => r.data),
+  })
+
+  const { data: savedData } = useQuery({
+    queryKey: ['saved-check', id],
+    queryFn: () => api.get(`/saved/${id}/check`).then(r => r.data as { saved: boolean }),
+    enabled: isAuthenticated,
+  })
+  const isSaved = savedData?.saved ?? false
+
+  const toggleSave = useMutation({
+    mutationFn: () => isSaved ? api.delete(`/saved/${id}`) : api.post(`/saved/${id}`, {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['saved-check', id] })
+      qc.invalidateQueries({ queryKey: ['saved-items'] })
+      toast.success(isSaved ? 'Removed from saved' : 'Saved!')
+    },
   })
 
   const addToCart = async () => {
@@ -175,14 +192,25 @@ export default function ItemDetailPage() {
             </div>
           )}
 
-          <button
-            onClick={addToCart}
-            disabled={mode === 'RENT' && (!startDate || !endDate)}
-            className="w-full bg-primary text-white py-3 rounded-xl font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {mode === 'RENT' ? 'Add to Cart' : 'Buy Now'}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={addToCart}
+              disabled={mode === 'RENT' && (!startDate || !endDate)}
+              className="flex-1 bg-primary text-white py-3 rounded-xl font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {mode === 'RENT' ? 'Add to Cart' : 'Buy Now'}
+            </button>
+            {isAuthenticated && (
+              <button
+                onClick={() => toggleSave.mutate()}
+                className="px-4 py-3 rounded-xl border border-border hover:bg-accent transition-colors"
+                title={isSaved ? 'Remove from saved' : 'Save item'}
+              >
+                <Heart className={`h-5 w-5 ${isSaved ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
+              </button>
+            )}
+          </div>
 
           {/* Vendor card */}
           <div className="mt-6 border border-border rounded-xl p-4">

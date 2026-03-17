@@ -1,5 +1,47 @@
 # INNEED — Progress
 
+## Sprint 5 ✅
+
+**Status:** Complete
+**Date:** 2026-03-18
+
+### Completed
+- POST /reviews: one-per-orderLine, updates ListingPricing averageRating + totalReviews
+- GET /listings/:id/reviews + GET /vendor/reviews (paginated)
+- POST /disputes: file dispute against order with DisputeType enum + initial evidence
+- GET /disputes/:id: dispute detail with evidence thread (auth-gated)
+- POST /disputes/:id/evidence: add evidence by either party
+- GET + POST /admin/disputes: admin dispute queue + resolve with deposit adjustment
+- GET /notifications + /unread-count + POST /notifications/read
+- Notification helpers: notifyOrderConfirmed, notifyRentalApproved, notifyReturnReminder, notifyDisputeOpened, notifyDisputeResolved
+- GET/POST/DELETE /saved: wishlist CRUD, GET /saved/:id/check
+- Frontend: Notification bell with unread badge (30s polling)
+- Frontend: /notifications — full notification center with mark-as-read
+- Frontend: /saved — saved items grid with heart toggle
+- Frontend: Heart save button on item detail page
+- Frontend: /customer/disputes — dispute list + evidence thread
+- Frontend: /vendor/disputes — vendor dispute view + response
+- Frontend: /admin/disputes — admin resolve console with deposit adjustment
+- UI components created: Button, Badge, Card, Input, Label, Textarea, Separator, Select
+
+---
+
+## Sprint 4 ✅
+
+**Status:** Complete
+**Date:** 2026-03-18
+
+### Completed
+- Rental state machine: approve → ready_for_pickup → pickup (code verify) → return (condition) → closed/disputed
+- Extension request + vendor approval
+- pg-boss hourly job: ACTIVE → DUE → OVERDUE for overdue rentals
+- SecurityDepositHold auto-released on good return
+- Vendor: dashboard, bookings, earnings ledger
+- Customer: rentals (pickup code display) + order history
+- Frontend: all pages for vendor management and customer tracking
+
+---
+
 ## Sprint 3 ✅
 
 **Status:** Complete

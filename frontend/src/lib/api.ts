@@ -8,6 +8,8 @@ export const api = axios.create({
   },
 })
 
+export default api
+
 // Response interceptor: auto-refresh on 401
 api.interceptors.response.use(
   (response) => response,
