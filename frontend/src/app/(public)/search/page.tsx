@@ -1,13 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, Suspense, lazy } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { Search, SlidersHorizontal, LayoutGrid, Map } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatINR } from '@/lib/utils'
+
+const ListingsMap = lazy(() => import('@/components/maps/ListingsMap'))
 
 const CONDITIONS = ['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'HEAVY_USE']
 const CONDITIONS_LABEL: Record<string, string> = {
@@ -18,6 +20,7 @@ export default function SearchPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [showFilters, setShowFilters] = useState(false)
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
 
   const q = searchParams.get('q') || ''
   const categoryId = searchParams.get('categoryId') || ''
@@ -119,7 +122,31 @@ export default function SearchPage() {
               {isLoading ? 'Searching...' : `${data?.total || 0} items found`}
               {q && ` for "${q}"`}
             </p>
+            <div className="flex items-center border border-border rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 ${viewMode === 'grid' ? 'bg-primary text-white' : 'hover:bg-accent'}`}
+                title="Grid view"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`p-2 ${viewMode === 'map' ? 'bg-primary text-white' : 'hover:bg-accent'}`}
+                title="Map view"
+              >
+                <Map className="h-4 w-4" />
+              </button>
+            </div>
           </div>
+
+          {viewMode === 'map' && !isLoading && (
+            <div className="rounded-xl overflow-hidden mb-6">
+              <Suspense fallback={<div className="h-[500px] bg-muted animate-pulse rounded-xl" />}>
+                <ListingsMap listings={data?.listings ?? []} />
+              </Suspense>
+            </div>
+          )}
 
           {isLoading && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
