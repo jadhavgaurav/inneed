@@ -1,5 +1,22 @@
 # INNEED — Progress
 
+## Sprint 3 ✅
+
+**Status:** Complete
+**Date:** 2026-03-18
+
+### Completed
+- Server-side cart CRUD (add/update/remove/clear)
+- POST /checkout/quote: subtotal + deposits + 10% commission
+- POST /checkout: Order creation with cart clear
+- POST /payments/create-order: Razorpay order in paise
+- POST /payments/verify: HMAC signature verification, confirms order, creates Rentals + DepositHold + LedgerEntry
+- POST /payments/webhook: Razorpay event handling
+- GET /orders/:id, GET /orders (customer history)
+- Frontend: Cart page, Checkout with Razorpay.js, Order confirmation with pickup codes
+
+---
+
 ## Sprint 2 ✅
 
 **Status:** Complete
