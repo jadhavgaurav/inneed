@@ -1,0 +1,702 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum VendorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum DocType {
+  AADHAAR
+  PAN
+  PASSPORT
+  DRIVING_LICENSE
+  OTHER
+}
+
+enum ItemCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  HEAVY_USE
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+  FLAGGED
+}
+
+enum OrderMode {
+  RENT
+  BUY
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentMethod {
+  UPI
+  CARD
+  NET_BANKING
+  WALLET
+}
+
+enum PaymentStatus {
+  CREATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+enum RentalStatus {
+  RESERVED
+  READY_FOR_PICKUP
+  PICKED_UP
+  ACTIVE
+  DUE
+  OVERDUE
+  RETURNED
+  INSPECTED
+  CLOSED
+  EXTENDED
+  DISPUTED
+  CANCELLED
+}
+
+enum DepositStatus {
+  HELD
+  RELEASED
+  PARTIALLY_RELEASED
+  FORFEITED
+}
+
+enum DisputeType {
+  ITEM_NOT_AS_DESCRIBED
+  DAMAGED_ITEM
+  MISSING_PARTS
+  LATE_RETURN
+  RETURN_DAMAGE
+  PAYMENT_ISSUE
+  OTHER
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum LedgerType {
+  EARNING
+  COMMISSION
+  PAYOUT
+  REFUND_DEDUCTION
+  DEPOSIT_FORFEITURE
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum NotificationType {
+  ORDER
+  BOOKING
+  RENTAL
+  PAYMENT
+  REVIEW
+  DISPUTE
+  SYSTEM
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+model User {
+  id               String    @id @default(uuid())
+  email            String?   @unique
+  phone            String?   @unique
+  passwordHash     String?
+  name             String
+  avatar           String?
+  role             UserRole  @default(CUSTOMER)
+  isVendorApproved Boolean   @default(false)
+  googleId         String?   @unique
+  isActive         Boolean   @default(true)
+  lastLoginAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  sessions      Session[]
+  otpRequests   OtpRequest[]
+  vendorProfile VendorProfile?
+  listings      Listing[]      @relation("VendorListings")
+  orders        Order[]
+  reviews       Review[]
+  disputes      Dispute[]      @relation("FiledDisputes")
+  notifications Notification[]
+  savedItems    SavedItem[]
+  cart          Cart?
+  ledgerEntries LedgerEntry[]
+  rentalsAs     Rental[]       @relation("CustomerRentals")
+  vendorRentals Rental[]       @relation("VendorRentals")
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken])
+}
+
+model OtpRequest {
+  id        String   @id @default(uuid())
+  phone     String
+  otp       String
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([phone])
+  @@index([phone, isUsed, expiresAt])
+}
+
+// ─── Vendors ─────────────────────────────────────────────────────────────────
+
+model VendorProfile {
+  id              String       @id @default(uuid())
+  userId          String       @unique
+  businessName    String
+  businessType    String
+  phone           String
+  bio             String?
+  status          VendorStatus @default(PENDING)
+  rejectionReason String?
+  approvedAt      DateTime?
+  approvedBy      String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location  VendorLocation?
+  documents VendorDocument[]
+  metrics   VendorMetrics?
+  payouts   Payout[]
+
+  @@index([status])
+}
+
+model VendorLocation {
+  id        String   @id @default(uuid())
+  vendorId  String   @unique
+  address   String
+  city      String
+  state     String
+  pincode   String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([latitude, longitude])
+}
+
+model VendorDocument {
+  id        String   @id @default(uuid())
+  vendorId  String
+  type      DocType
+  r2Key     String
+  fileName  String
+  createdAt DateTime @default(now())
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+}
+
+model VendorMetrics {
+  id            String   @id @default(uuid())
+  vendorId      String   @unique
+  averageRating Float    @default(0)
+  totalReviews  Int      @default(0)
+  totalListings Int      @default(0)
+  totalOrders   Int      @default(0)
+  totalEarnings Float    @default(0)
+  responseTime  Int?
+  updatedAt     DateTime @updatedAt
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+}
+
+// ─── Catalog ─────────────────────────────────────────────────────────────────
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  icon        String?
+  description String?
+  parentId    String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  listings Listing[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model Listing {
+  id               String        @id @default(uuid())
+  vendorId         String
+  categoryId       String
+  title            String        @db.VarChar(100)
+  description      String        @db.VarChar(2000)
+  condition        ItemCondition
+  availableForRent Boolean       @default(true)
+  availableForSale Boolean       @default(false)
+  quantity         Int           @default(1)
+  features         String[]
+  status           ListingStatus @default(DRAFT)
+  isFeatured       Boolean       @default(false)
+  latitude         Float?
+  longitude        Float?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  vendor     User              @relation("VendorListings", fields: [vendorId], references: [id])
+  category   Category          @relation(fields: [categoryId], references: [id])
+  pricing    ListingPricing?
+  media      ListingMedia[]
+  rules      ListingAvailabilityRule[]
+  blackouts  ListingBlackout[]
+  orderLines OrderLine[]
+  rentals    Rental[]
+  reviews    Review[]
+  savedBy    SavedItem[]
+  cartItems  CartItem[]
+
+  @@index([vendorId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([isFeatured])
+  @@index([latitude, longitude])
+}
+
+model ListingPricing {
+  id                String   @id @default(uuid())
+  listingId         String   @unique
+  currency          String   @default("INR")
+  rentPriceDaily    Float?
+  rentPriceWeekly   Float?
+  rentPriceMonthly  Float?
+  buyPrice          Float?
+  securityDeposit   Float    @default(0)
+  averageRating     Float    @default(0)
+  totalReviews      Int      @default(0)
+  updatedAt         DateTime @updatedAt
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([rentPriceDaily])
+  @@index([buyPrice])
+}
+
+model ListingMedia {
+  id        String   @id @default(uuid())
+  listingId String
+  r2Key     String
+  url       String?
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model ListingAvailabilityRule {
+  id        String   @id @default(uuid())
+  listingId String
+  dayOfWeek Int
+  isAvailable Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model ListingBlackout {
+  id        String   @id @default(uuid())
+  listingId String
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  reason    String?
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+// ─── Shopping ────────────────────────────────────────────────────────────────
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+}
+
+model CartItem {
+  id               String    @id @default(uuid())
+  cartId           String
+  listingId        String
+  mode             OrderMode
+  quantity         Int       @default(1)
+  startDate        DateTime?
+  endDate          DateTime?
+  damageProtection Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id])
+
+  @@index([cartId])
+}
+
+model SavedItem {
+  id        String   @id @default(uuid())
+  userId    String
+  listingId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+  @@index([userId])
+}
+
+// ─── Orders ──────────────────────────────────────────────────────────────────
+
+model Order {
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique
+  userId          String
+  status          OrderStatus @default(PENDING_PAYMENT)
+  subtotal        Float
+  depositTotal    Float       @default(0)
+  commissionTotal Float       @default(0)
+  commissionRate  Float       @default(0.10)
+  total           Float
+  pickupAddress   String?
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user      User        @relation(fields: [userId], references: [id])
+  lines     OrderLine[]
+  payment   Payment?
+  disputes  Dispute[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([orderNumber])
+}
+
+model OrderLine {
+  id               String    @id @default(uuid())
+  orderId          String
+  listingId        String
+  vendorId         String
+  mode             OrderMode
+  unitPrice        Float
+  totalPrice       Float
+  securityDeposit  Float     @default(0)
+  startDate        DateTime?
+  endDate          DateTime?
+  totalDays        Int?
+  damageProtection Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id])
+  rental  Rental?
+  review  Review?
+
+  @@index([orderId])
+  @@index([listingId])
+  @@index([vendorId])
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  orderId           String        @unique
+  razorpayOrderId   String?       @unique
+  razorpayPaymentId String?       @unique
+  amount            Float
+  status            PaymentStatus @default(CREATED)
+  method            PaymentMethod?
+  idempotencyKey    String        @unique
+  failureReason     String?
+  capturedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  order   Order    @relation(fields: [orderId], references: [id])
+  refunds Refund[]
+
+  @@index([razorpayOrderId])
+  @@index([status])
+}
+
+model Refund {
+  id                String   @id @default(uuid())
+  paymentId         String
+  razorpayRefundId  String?  @unique
+  amount            Float
+  reason            String?
+  status            String   @default("PENDING")
+  createdAt         DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@index([paymentId])
+}
+
+// ─── Rentals ─────────────────────────────────────────────────────────────────
+
+model Rental {
+  id          String       @id @default(uuid())
+  orderLineId String       @unique
+  customerId  String
+  vendorId    String
+  listingId   String
+  status      RentalStatus @default(RESERVED)
+  startDate   DateTime
+  endDate     DateTime
+  pickupCode  String       @db.VarChar(6)
+  pickedUpAt  DateTime?
+  returnedAt  DateTime?
+  inspectedAt DateTime?
+  closedAt    DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  orderLine     OrderLine            @relation(fields: [orderLineId], references: [id])
+  customer      User                 @relation("CustomerRentals", fields: [customerId], references: [id])
+  vendor        User                 @relation("VendorRentals", fields: [vendorId], references: [id])
+  listing       Listing              @relation(fields: [listingId], references: [id])
+  events        RentalEvent[]
+  depositHold   SecurityDepositHold?
+
+  @@index([customerId])
+  @@index([vendorId])
+  @@index([listingId])
+  @@index([listingId, startDate, endDate])
+  @@index([status, endDate])
+}
+
+model RentalEvent {
+  id          String   @id @default(uuid())
+  rentalId    String
+  type        String
+  data        Json?
+  performedBy String?
+  createdAt   DateTime @default(now())
+
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  @@index([rentalId])
+}
+
+model SecurityDepositHold {
+  id              String        @id @default(uuid())
+  rentalId        String        @unique
+  amount          Float
+  status          DepositStatus @default(HELD)
+  releasedAmount  Float?
+  deductedAmount  Float?
+  deductionReason String?
+  processedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  rental Rental @relation(fields: [rentalId], references: [id])
+}
+
+// ─── Reviews & Disputes ───────────────────────────────────────────────────────
+
+model Review {
+  id          String   @id @default(uuid())
+  userId      String
+  listingId   String
+  orderLineId String   @unique
+  rating      Int
+  comment     String   @db.VarChar(1000)
+  images      String[]
+  helpfulCount Int     @default(0)
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id])
+  listing   Listing   @relation(fields: [listingId], references: [id])
+  orderLine OrderLine @relation(fields: [orderLineId], references: [id])
+
+  @@index([listingId])
+  @@index([userId])
+}
+
+model Dispute {
+  id             String        @id @default(uuid())
+  disputeNumber  String        @unique
+  orderId        String
+  filedBy        String
+  againstVendorId String
+  type           DisputeType
+  description    String        @db.VarChar(2000)
+  status         DisputeStatus @default(OPEN)
+  resolution     String?
+  resolvedBy     String?
+  resolvedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  order    Order             @relation(fields: [orderId], references: [id])
+  filer    User              @relation("FiledDisputes", fields: [filedBy], references: [id])
+  evidence DisputeEvidence[]
+
+  @@index([orderId])
+  @@index([filedBy])
+  @@index([status])
+}
+
+model DisputeEvidence {
+  id        String   @id @default(uuid())
+  disputeId String
+  userId    String
+  message   String
+  images    String[]
+  createdAt DateTime @default(now())
+
+  dispute Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  @@index([disputeId])
+}
+
+// ─── Vendor Earnings ──────────────────────────────────────────────────────────
+
+model LedgerEntry {
+  id          String     @id @default(uuid())
+  vendorId    String
+  orderId     String?
+  type        LedgerType
+  amount      Float
+  balance     Float
+  description String?
+  createdAt   DateTime   @default(now())
+
+  vendor User @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId])
+  @@index([vendorId, createdAt])
+}
+
+model Payout {
+  id               String       @id @default(uuid())
+  vendorId         String
+  amount           Float
+  status           PayoutStatus @default(PENDING)
+  razorpayPayoutId String?      @unique
+  bankAccount      String?
+  failureReason    String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId])
+  @@index([status])
+}
+
+// ─── Notifications & Config ───────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt(sort: Desc)])
+}
+
+model PlatformConfig {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedBy   String?
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+}
