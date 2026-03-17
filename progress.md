@@ -1,5 +1,22 @@
 # INNEED — Progress
 
+## Sprint 2 ✅
+
+**Status:** Complete
+**Date:** 2026-03-18
+
+### Completed
+- Admin Category CRUD + public GET /categories
+- Vendor Listing CRUD + presigned image URLs (R2)
+- GET /listings: full-text search (ilike), pagination, category/price/condition/mode filters
+- GET /listings/:id: listing + pricing + vendor + media + reviews
+- Frontend: Homepage (hero, category grid, featured listings, how it works)
+- Frontend: Search results with sidebar filters
+- Frontend: Item detail page (gallery, pricing, date picker, vendor card, reviews)
+- Frontend: Vendor listing management table + create listing form
+
+---
+
 ## Sprint 1 ✅
 
 **Status:** Complete
