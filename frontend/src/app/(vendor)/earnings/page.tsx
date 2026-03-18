@@ -8,7 +8,7 @@ const TYPE_COLORS: Record<string, string> = {
   EARNING: 'text-green-600',
   COMMISSION: 'text-red-500',
   PAYOUT: 'text-blue-600',
-  REFUND_DEDUCTION: 'text-orange-600',
+  REFUND_DEDUCTION: 'text-purple-600',
   DEPOSIT_FORFEITURE: 'text-primary',
 }
 

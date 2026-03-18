@@ -20,7 +20,7 @@ interface Notification {
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   ORDER: <Package className="h-5 w-5 text-blue-500" />,
-  BOOKING: <Package className="h-5 w-5 text-orange-500" />,
+  BOOKING: <Package className="h-5 w-5 text-purple-500" />,
   RENTAL: <Package className="h-5 w-5 text-green-500" />,
   PAYMENT: <DollarSign className="h-5 w-5 text-emerald-500" />,
   REVIEW: <Star className="h-5 w-5 text-yellow-500" />,
