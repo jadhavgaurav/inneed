@@ -27,8 +27,8 @@ export default function VendorListingsPage() {
   const STATUS_COLORS: Record<string, string> = {
     ACTIVE: 'bg-green-100 text-green-700',
     PAUSED: 'bg-yellow-100 text-yellow-700',
-    DRAFT: 'bg-gray-100 text-gray-700',
-    ARCHIVED: 'bg-red-100 text-red-700',
+    DRAFT: 'bg-muted text-muted-foreground',
+    ARCHIVED: 'bg-destructive/10 text-destructive',
   }
 
   return (
@@ -66,7 +66,7 @@ export default function VendorListingsPage() {
                 <p className="text-sm font-medium text-primary">{formatINR(listing.pricing.rentPriceDaily)}/day</p>
               )}
             </div>
-            <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[listing.status] || 'bg-gray-100'}`}>
+            <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[listing.status] || 'bg-muted text-muted-foreground'}`}>
               {listing.status}
             </span>
             <div className="flex items-center gap-1">

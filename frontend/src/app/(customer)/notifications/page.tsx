@@ -20,12 +20,12 @@ interface Notification {
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   ORDER: <Package className="h-5 w-5 text-blue-500" />,
-  BOOKING: <Package className="h-5 w-5 text-purple-500" />,
+  BOOKING: <Package className="h-5 w-5 text-primary" />,
   RENTAL: <Package className="h-5 w-5 text-green-500" />,
   PAYMENT: <DollarSign className="h-5 w-5 text-emerald-500" />,
   REVIEW: <Star className="h-5 w-5 text-yellow-500" />,
-  DISPUTE: <AlertTriangle className="h-5 w-5 text-red-500" />,
-  SYSTEM: <Bell className="h-5 w-5 text-gray-500" />,
+  DISPUTE: <AlertTriangle className="h-5 w-5 text-destructive" />,
+  SYSTEM: <Bell className="h-5 w-5 text-muted-foreground" />,
 }
 
 export default function NotificationsPage() {
@@ -97,17 +97,17 @@ export default function NotificationsPage() {
             <div
               className={cn(
                 'flex gap-3 px-4 py-3 hover:bg-accent/50 transition-colors cursor-pointer',
-                !n.isRead && 'bg-blue-50/50'
+                !n.isRead && 'bg-primary/5'
               )}
               onClick={() => !n.isRead && markRead.mutate(n.id)}
             >
               <div className="mt-0.5 flex-shrink-0">
-                {TYPE_ICONS[n.type] ?? <Bell className="h-5 w-5 text-gray-500" />}
+                {TYPE_ICONS[n.type] ?? <Bell className="h-5 w-5 text-muted-foreground" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <p className={cn('text-sm', !n.isRead && 'font-semibold')}>{n.title}</p>
-                  {!n.isRead && <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />}
+                  {!n.isRead && <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />}
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2">{n.message}</p>
                 <p className="text-xs text-muted-foreground mt-1">{formatDate(n.createdAt)}</p>

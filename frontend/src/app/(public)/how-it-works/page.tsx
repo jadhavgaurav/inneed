@@ -57,7 +57,7 @@ export default function HowItWorksPage() {
         <div className="grid md:grid-cols-4 gap-6">
           {vendorSteps.map(s => (
             <div key={s.step} className="text-center">
-              <div className="w-12 h-12 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-bold mx-auto mb-4">
+              <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-lg font-bold mx-auto mb-4">
                 {s.step}
               </div>
               <h3 className="font-semibold mb-2">{s.title}</h3>
@@ -66,7 +66,7 @@ export default function HowItWorksPage() {
           ))}
         </div>
         <div className="text-center mt-8">
-          <Link href="/vendor/onboarding" className="bg-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:opacity-90">
+          <Link href="/vendor/onboarding" className="bg-primary text-white px-6 py-3 rounded-xl font-medium hover:opacity-90">
             Start Earning
           </Link>
         </div>

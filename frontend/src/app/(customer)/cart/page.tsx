@@ -104,7 +104,7 @@ export default function CartPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {[1,2,3,4].map(i => <div key={i} className="h-4 bg-gray-100 rounded animate-pulse" />)}
+                {[1,2,3,4].map(i => <div key={i} className="h-4 bg-muted rounded animate-pulse" />)}
               </div>
             )}
             <Link

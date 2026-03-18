@@ -10,7 +10,7 @@ const variantClasses: Record<string, string> = {
   default: 'bg-primary text-white hover:opacity-90',
   outline: 'border border-border hover:bg-accent',
   ghost: 'hover:bg-accent',
-  destructive: 'bg-red-600 text-white hover:opacity-90',
+  destructive: 'bg-destructive text-destructive-foreground hover:opacity-90',
   secondary: 'bg-muted hover:bg-muted/80',
   link: 'text-primary underline-offset-4 hover:underline',
 }

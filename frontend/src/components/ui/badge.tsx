@@ -8,7 +8,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 const variantClasses: Record<string, string> = {
   default: 'bg-primary text-white',
   secondary: 'bg-muted text-foreground',
-  destructive: 'bg-red-600 text-white',
+  destructive: 'bg-destructive text-destructive-foreground',
   outline: 'border border-border',
 }
 

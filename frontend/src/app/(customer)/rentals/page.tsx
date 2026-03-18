@@ -9,10 +9,10 @@ const STATUS_COLORS: Record<string, string> = {
   RESERVED: 'bg-yellow-100 text-yellow-700',
   READY_FOR_PICKUP: 'bg-blue-100 text-blue-700',
   ACTIVE: 'bg-green-100 text-green-700',
-  DUE: 'bg-purple-100 text-purple-700',
-  OVERDUE: 'bg-red-100 text-red-700',
-  RETURNED: 'bg-gray-100 text-gray-600',
-  CLOSED: 'bg-gray-50 text-gray-500',
+  DUE: 'bg-primary/10 text-primary',
+  OVERDUE: 'bg-destructive/10 text-destructive',
+  RETURNED: 'bg-muted text-muted-foreground',
+  CLOSED: 'bg-muted/50 text-muted-foreground',
 }
 
 export default function CustomerRentalsPage() {
@@ -51,7 +51,7 @@ export default function CustomerRentalsPage() {
                   {formatDate(rental.startDate)} → {formatDate(rental.endDate)}
                 </p>
               </div>
-              <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${STATUS_COLORS[rental.status] || 'bg-gray-100'}`}>
+              <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${STATUS_COLORS[rental.status] || 'bg-muted text-muted-foreground'}`}>
                 {rental.status.replace(/_/g, ' ')}
               </span>
             </div>
@@ -69,7 +69,7 @@ export default function CustomerRentalsPage() {
             {/* Active rental countdown */}
             {['ACTIVE', 'DUE', 'OVERDUE'].includes(rental.status) && (
               <div className="mt-3 text-sm">
-                <span className={rental.status === 'OVERDUE' ? 'text-red-600 font-medium' : 'text-muted-foreground'}>
+                <span className={rental.status === 'OVERDUE' ? 'text-destructive font-medium' : 'text-muted-foreground'}>
                   Return by: {formatDate(rental.endDate)}
                   {rental.status === 'OVERDUE' && ' — OVERDUE'}
                 </span>

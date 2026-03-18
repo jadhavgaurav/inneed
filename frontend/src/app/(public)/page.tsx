@@ -5,10 +5,10 @@ import { Search, MapPin, Camera, Bike, Wrench, Sofa, Laptop, Music } from 'lucid
 import { api } from '@/lib/api'
 
 const CATEGORIES = [
-  { icon: Camera, name: 'Cameras', slug: 'cameras', color: 'bg-purple-100 text-purple-600' },
+  { icon: Camera, name: 'Cameras', slug: 'cameras', color: 'bg-primary/10 text-primary' },
   { icon: Bike, name: 'Bikes', slug: 'bikes', color: 'bg-blue-100 text-blue-600' },
   { icon: Wrench, name: 'Tools', slug: 'tools', color: 'bg-green-100 text-green-600' },
-  { icon: Sofa, name: 'Furniture', slug: 'furniture', color: 'bg-purple-100 text-purple-600' },
+  { icon: Sofa, name: 'Furniture', slug: 'furniture', color: 'bg-primary/10 text-primary' },
   { icon: Laptop, name: 'Electronics', slug: 'electronics', color: 'bg-yellow-100 text-yellow-600' },
   { icon: Music, name: 'Instruments', slug: 'instruments', color: 'bg-pink-100 text-pink-600' },
 ]
@@ -32,7 +32,7 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="bg-gradient-to-br from-purple-50 to-purple-100 py-16 px-4">
+      <section className="bg-gradient-to-br from-primary/5 to-primary/10 py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl font-bold mb-4">
             Rent Anything Near You

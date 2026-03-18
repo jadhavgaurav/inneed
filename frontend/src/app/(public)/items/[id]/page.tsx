@@ -63,11 +63,11 @@ export default function ItemDetailPage() {
   if (isLoading) return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="grid md:grid-cols-2 gap-8 animate-pulse">
-        <div className="aspect-[4/3] bg-gray-200 rounded-2xl" />
+        <div className="aspect-[4/3] bg-muted rounded-2xl" />
         <div className="space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-3/4" />
-          <div className="h-6 bg-gray-200 rounded w-1/2" />
-          <div className="h-32 bg-gray-200 rounded" />
+          <div className="h-8 bg-muted rounded w-3/4" />
+          <div className="h-6 bg-muted rounded w-1/2" />
+          <div className="h-32 bg-muted rounded" />
         </div>
       </div>
     </div>
@@ -264,7 +264,7 @@ export default function ItemDetailPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className={`h-3 w-3 ${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                      <Star key={i} className={`h-3 w-3 ${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-border'}`} />
                     ))}
                   </div>
                 </div>

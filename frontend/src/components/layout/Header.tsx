@@ -52,7 +52,7 @@ export default function Header() {
               <Link href="/notifications" className="relative p-2 hover:bg-accent rounded-lg">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium">
+                  <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}

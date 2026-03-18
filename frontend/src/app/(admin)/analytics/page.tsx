@@ -61,8 +61,8 @@ export default function AdminAnalyticsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard title="Total Users" value={data?.totalUsers.toLocaleString() ?? '0'} icon={Users} color="bg-blue-500" />
           <StatCard title="Active Listings" value={data?.totalListings.toLocaleString() ?? '0'} icon={Package} color="bg-green-500" />
-          <StatCard title="Total Orders" value={data?.totalOrders.toLocaleString() ?? '0'} icon={ShoppingBag} color="bg-purple-500" />
-          <StatCard title="Total Revenue" value={formatINR(data?.totalRevenue ?? 0)} icon={TrendingUp} color="bg-purple-500" />
+          <StatCard title="Total Orders" value={data?.totalOrders.toLocaleString() ?? '0'} icon={ShoppingBag} color="bg-primary" />
+          <StatCard title="Total Revenue" value={formatINR(data?.totalRevenue ?? 0)} icon={TrendingUp} color="bg-primary" />
         </div>
       )}
 

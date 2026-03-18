@@ -11,9 +11,9 @@ const STATUS_COLORS: Record<string, string> = {
   RESERVED: 'bg-yellow-100 text-yellow-700',
   READY_FOR_PICKUP: 'bg-blue-100 text-blue-700',
   ACTIVE: 'bg-green-100 text-green-700',
-  DUE: 'bg-purple-100 text-purple-700',
-  OVERDUE: 'bg-red-100 text-red-700',
-  CLOSED: 'bg-gray-100 text-gray-500',
+  DUE: 'bg-primary/10 text-primary',
+  OVERDUE: 'bg-destructive/10 text-destructive',
+  CLOSED: 'bg-muted text-muted-foreground',
 }
 
 export default function VendorBookingsPage() {
@@ -81,7 +81,7 @@ export default function VendorBookingsPage() {
                 </p>
                 <p className="text-xs font-mono text-muted-foreground mt-1">Code: {rental.pickupCode}</p>
               </div>
-              <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${STATUS_COLORS[rental.status] || 'bg-gray-100'}`}>
+              <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${STATUS_COLORS[rental.status] || 'bg-muted text-muted-foreground'}`}>
                 {rental.status.replace('_', ' ')}
               </span>
             </div>

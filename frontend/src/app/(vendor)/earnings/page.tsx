@@ -6,9 +6,9 @@ import { formatINR, formatDate } from '@/lib/utils'
 
 const TYPE_COLORS: Record<string, string> = {
   EARNING: 'text-green-600',
-  COMMISSION: 'text-red-500',
+  COMMISSION: 'text-destructive',
   PAYOUT: 'text-blue-600',
-  REFUND_DEDUCTION: 'text-purple-600',
+  REFUND_DEDUCTION: 'text-primary',
   DEPOSIT_FORFEITURE: 'text-primary',
 }
 

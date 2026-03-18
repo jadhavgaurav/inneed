@@ -8,8 +8,8 @@ import { formatINR, formatDate } from '@/lib/utils'
 const STATUS_COLORS: Record<string, string> = {
   PENDING_PAYMENT: 'bg-yellow-100 text-yellow-700',
   CONFIRMED: 'bg-green-100 text-green-700',
-  CANCELLED: 'bg-red-100 text-red-600',
-  COMPLETED: 'bg-gray-100 text-gray-600',
+  CANCELLED: 'bg-destructive/10 text-destructive',
+  COMPLETED: 'bg-muted text-muted-foreground',
 }
 
 export default function CustomerOrdersPage() {
@@ -42,7 +42,7 @@ export default function CustomerOrdersPage() {
                 <p className="text-xs text-muted-foreground">{formatDate(order.createdAt)}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[order.status] || 'bg-gray-100'}`}>
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[order.status] || 'bg-muted text-muted-foreground'}`}>
                   {order.status.replace('_', ' ')}
                 </span>
                 <span className="font-semibold">{formatINR(order.total)}</span>

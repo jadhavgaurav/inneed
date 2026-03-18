@@ -71,7 +71,7 @@ export default function VendorOnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen bg-muted/30 py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold">Become a Vendor on INNEED</h1>
@@ -82,11 +82,11 @@ export default function VendorOnboardingPage() {
         <div className="flex items-center justify-between mb-8">
           {STEPS.map((s, i) => (
             <div key={s} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${i <= step ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${i <= step ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
                 {i + 1}
               </div>
               <span className={`ml-2 text-sm hidden sm:block ${i <= step ? 'text-primary font-medium' : 'text-muted-foreground'}`}>{s}</span>
-              {i < STEPS.length - 1 && <div className={`w-8 h-px mx-2 ${i < step ? 'bg-primary' : 'bg-gray-300'}`} />}
+              {i < STEPS.length - 1 && <div className={`w-8 h-px mx-2 ${i < step ? 'bg-primary' : 'bg-border'}`} />}
             </div>
           ))}
         </div>

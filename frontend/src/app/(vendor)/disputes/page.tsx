@@ -34,10 +34,10 @@ interface Dispute {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: 'bg-red-100 text-red-700',
+  OPEN: 'bg-destructive/10 text-destructive',
   UNDER_REVIEW: 'bg-yellow-100 text-yellow-700',
   RESOLVED: 'bg-green-100 text-green-700',
-  CLOSED: 'bg-gray-100 text-gray-700',
+  CLOSED: 'bg-muted text-muted-foreground',
 }
 
 function DisputeThread({ dispute }: { dispute: Dispute }) {
