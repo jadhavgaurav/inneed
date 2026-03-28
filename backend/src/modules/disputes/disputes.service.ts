@@ -1,4 +1,6 @@
-import { PrismaClient, DisputeStatus, DisputeType } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
+type DisputeStatus = 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED' | 'CLOSED'
+type DisputeType = 'ITEM_NOT_AS_DESCRIBED' | 'DAMAGED_ITEM' | 'MISSING_PARTS' | 'LATE_RETURN' | 'RETURN_DAMAGE' | 'PAYMENT_ISSUE' | 'OTHER'
 import { sanitizeText } from '../../lib/sanitize'
 
 function generateDisputeNumber() {
@@ -21,7 +23,7 @@ export class DisputesService {
       throw Object.assign(new Error('Not authorized'), { statusCode: 403 })
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: any) => {
       const dispute = await tx.dispute.create({
         data: {
           disputeNumber: generateDisputeNumber(),
@@ -137,7 +139,7 @@ export class DisputesService {
       throw Object.assign(new Error('Dispute already resolved'), { statusCode: 400 })
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: any) => {
       const updated = await tx.dispute.update({
         where: { id },
         data: {
