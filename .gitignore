@@ -5,5 +5,5 @@ dist
 .env.local
 *.log
 .DS_Store
-backend/prisma/migrations
+# backend/prisma/migrations — DO NOT ignore, needed for prisma migrate deploy on Railway
 .pnpm-store 
