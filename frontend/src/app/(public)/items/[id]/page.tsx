@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Star, MapPin, Shield, Heart } from 'lucide-react'
+import { ShoppingCart, Star, MapPin, Shield, Heart, Share2, Clock, ArrowRight } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatINR, formatDate } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
@@ -40,6 +40,26 @@ export default function ItemDetailPage() {
       toast.success(isSaved ? 'Removed from saved' : 'Saved!')
     },
   })
+
+  // Related items query (same category)
+  const { data: relatedData } = useQuery({
+    queryKey: ['related-items', listing?.categoryId],
+    queryFn: () => api.get(`/listings?categoryId=${listing?.categoryId}&limit=4`).then(r => r.data),
+    enabled: !!listing?.categoryId,
+  })
+  const relatedItems = (relatedData?.listings || []).filter((l: any) => l.id !== id).slice(0, 4)
+
+  const handleShare = async () => {
+    const url = window.location.href
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: listing?.title, url })
+      } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url)
+      toast.success('Link copied to clipboard!')
+    }
+  }
 
   const addToCart = async () => {
     if (!isAuthenticated) {
@@ -210,6 +230,13 @@ export default function ItemDetailPage() {
                 <Heart className={`h-5 w-5 ${isSaved ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
               </button>
             )}
+            <button
+              onClick={handleShare}
+              className="px-4 py-3 rounded-xl border border-border hover:bg-accent transition-colors"
+              title="Share this item"
+            >
+              <Share2 className="h-5 w-5 text-muted-foreground" />
+            </button>
           </div>
 
           {/* Vendor card */}
@@ -221,10 +248,12 @@ export default function ItemDetailPage() {
               </div>
               <div>
                 <p className="font-medium text-sm">{vendor?.name}</p>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3" />
-                  <span>Mumbai</span>
-                </div>
+                {vendor?.vendorProfile?.location?.city && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3" />
+                    <span>{vendor.vendorProfile.location.city}{vendor.vendorProfile.location.state ? `, ${vendor.vendorProfile.location.state}` : ''}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -271,6 +300,37 @@ export default function ItemDetailPage() {
                 <p className="text-sm text-muted-foreground">{review.comment}</p>
                 <p className="text-xs text-muted-foreground mt-1">{formatDate(review.createdAt)}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Related Items ── */}
+      {relatedItems.length > 0 && (
+        <div className="mt-12 border-t border-border pt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">Similar Items</h2>
+            <Link href={`/search?categoryId=${listing.categoryId}`} className="text-primary text-sm font-medium hover:underline flex items-center gap-1">
+              View all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {relatedItems.map((item: any) => (
+              <Link key={item.id} href={`/items/${item.id}`} className="group">
+                <div className="aspect-[4/3] bg-accent rounded-xl overflow-hidden mb-2 relative">
+                  {item.media?.[0]?.url ? (
+                    <Image src={item.media[0].url} alt={item.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                  )}
+                </div>
+                <h3 className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h3>
+                {item.pricing?.rentPriceDaily && (
+                  <p className="text-primary font-semibold text-sm">
+                    {formatINR(item.pricing.rentPriceDaily)}<span className="text-muted-foreground font-normal">/day</span>
+                  </p>
+                )}
+              </Link>
             ))}
           </div>
         </div>

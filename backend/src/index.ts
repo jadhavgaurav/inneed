@@ -1,3 +1,6 @@
+import { initSentry, Sentry } from './lib/sentry'
+initSentry()
+
 import Fastify from 'fastify'
 import fastifyCookie from '@fastify/cookie'
 import fastifyCors from '@fastify/cors'
@@ -7,8 +10,8 @@ import fastifySwagger from '@fastify/swagger'
 import fastifySwaggerUI from '@fastify/swagger-ui'
 import fastifyMultipart from '@fastify/multipart'
 import { PrismaClient } from '@prisma/client'
-import Redis from 'ioredis'
 import PgBoss from 'pg-boss'
+import { validateEnv } from './lib/env'
 
 // Modules
 import authRoutes from './modules/auth/auth.routes'
@@ -26,15 +29,35 @@ import savedRoutes from './modules/saved/saved.routes'
 import uploadRoutes from './modules/upload/upload.routes'
 import { setupJobs } from './jobs'
 
+const env = validateEnv()
 const prisma = new PrismaClient()
 
 async function buildApp() {
   const app = Fastify({
     logger: {
-      transport: process.env.NODE_ENV === 'development'
+      transport: env.NODE_ENV === 'development'
         ? { target: 'pino-pretty', options: { colorize: true } }
         : undefined,
     },
+    bodyLimit: 1048576, // 1MB JSON body limit
+  })
+
+  // Global error handler — never leak stack traces
+  app.setErrorHandler((err, request, reply) => {
+    const error = err as Error & { statusCode?: number }
+    const statusCode = error.statusCode || 500
+    const message = statusCode < 500 ? error.message : 'Internal Server Error'
+
+    if (statusCode >= 500) {
+      request.log.error(error, 'Unhandled error')
+      Sentry.captureException(error)
+    }
+
+    reply.status(statusCode).send({
+      error: true,
+      message,
+      statusCode,
+    })
   })
 
   // Plugins
@@ -48,15 +71,31 @@ async function buildApp() {
   })
 
   await app.register(fastifyCookie, {
-    secret: process.env.COOKIE_SECRET || 'inneed-cookie-secret-change-in-prod',
+    secret: env.COOKIE_SECRET,
   })
 
-  const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379')
+  // Redis — optional for dev; fallback to in-memory rate limiting
+  let redis: any = null
+  try {
+    const Redis = (await import('ioredis')).default
+    redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+      maxRetriesPerRequest: 1,
+      connectTimeout: 3000,
+      lazyConnect: true,
+      retryStrategy: () => null,
+      reconnectOnError: () => false,
+    })
+    await redis.connect()
+    console.log('Redis connected')
+  } catch (e) {
+    console.warn('Redis not available — using in-memory rate limiting')
+    redis = null
+  }
 
   await app.register(fastifyRateLimit, {
-    max: 100,
+    max: process.env.NODE_ENV === 'development' ? 1000 : 100,
     timeWindow: '1 minute',
-    redis,
+    ...(redis ? { redis } : {}),
   })
 
   await app.register(fastifySwagger, {
@@ -112,9 +151,15 @@ async function main() {
   const { app, redis } = await buildApp()
 
   // Background jobs
-  const boss = new PgBoss(process.env.DATABASE_URL!)
-  await boss.start()
-  await setupJobs(boss, prisma)
+  let boss: PgBoss | null = null
+  try {
+    boss = new PgBoss(process.env.DATABASE_URL!)
+    await boss.start()
+    await setupJobs(boss, prisma)
+    console.log('pg-boss background jobs started')
+  } catch (e) {
+    console.warn('pg-boss failed to start (non-fatal):', (e as Error).message)
+  }
 
   const port = parseInt(process.env.PORT || '3001')
   const host = process.env.HOST || '0.0.0.0'
@@ -126,8 +171,8 @@ async function main() {
   // Graceful shutdown
   const shutdown = async () => {
     await app.close()
-    await boss.stop()
-    await redis.quit()
+    if (boss) await boss.stop()
+    if (redis) await redis.quit()
     await prisma.$disconnect()
     process.exit(0)
   }

@@ -1,19 +1,13 @@
 import { PrismaClient } from '@prisma/client'
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { nanoid } from 'nanoid'
+import { v2 as cloudinary } from 'cloudinary'
+import { sanitizeText } from '../../lib/sanitize'
 
 export class VendorService {
-  private s3: S3Client
-
   constructor(private prisma: PrismaClient) {
-    this.s3 = new S3Client({
-      region: 'auto',
-      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
-      },
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
     })
   }
 
@@ -35,10 +29,10 @@ export class VendorService {
     const profile = await this.prisma.vendorProfile.create({
       data: {
         userId,
-        businessName: data.businessName,
-        businessType: data.businessType,
+        businessName: sanitizeText(data.businessName),
+        businessType: sanitizeText(data.businessType),
         phone: data.phone,
-        bio: data.bio,
+        bio: data.bio ? sanitizeText(data.bio) : undefined,
         location: {
           create: {
             address: data.address,
@@ -57,21 +51,23 @@ export class VendorService {
     return profile
   }
 
-  async getPresignedUrl(userId: string, fileType: 'document' | 'listing-image', mimeType: string) {
-    const ext = mimeType.split('/')[1] || 'jpg'
-    const key = `${fileType}s/${userId}/${nanoid()}.${ext}`
+  async getUploadSignature(userId: string, fileType: 'document' | 'listing-image') {
+    const folder = `inneed/${fileType}s/${userId}`
+    const timestamp = Math.round(Date.now() / 1000)
 
-    const url = await getSignedUrl(
-      this.s3,
-      new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME || 'inneed-uploads',
-        Key: key,
-        ContentType: mimeType,
-      }),
-      { expiresIn: 3600 }
+    const signature = cloudinary.utils.api_sign_request(
+      { timestamp, folder },
+      process.env.CLOUDINARY_API_SECRET!,
     )
 
-    return { url, key }
+    return {
+      uploadUrl: `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload`,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      timestamp,
+      signature,
+      folder,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    }
   }
 
   async saveDocument(vendorId: string, docType: string, r2Key: string, fileName: string) {

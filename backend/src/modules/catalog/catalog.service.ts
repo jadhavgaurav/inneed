@@ -1,5 +1,6 @@
 import { PrismaClient, Prisma } from '@prisma/client'
 import { nanoid } from 'nanoid'
+import { sanitizeText } from '../../lib/sanitize'
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
@@ -21,7 +22,7 @@ export class CatalogService {
   async createCategory(data: { name: string; icon?: string; description?: string; parentId?: string }) {
     const slug = slugify(data.name)
     return this.prisma.category.create({
-      data: { ...data, slug },
+      data: { ...data, name: sanitizeText(data.name), description: data.description ? sanitizeText(data.description) : undefined, slug },
     })
   }
 
@@ -52,6 +53,9 @@ export class CatalogService {
     return this.prisma.listing.create({
       data: {
         ...rest,
+        title: sanitizeText(rest.title),
+        description: sanitizeText(rest.description),
+        features: rest.features?.map(sanitizeText),
         condition: rest.condition as any,
         vendorId: vendorUserId,
         pricing: {
@@ -109,7 +113,8 @@ export class CatalogService {
     const data = images.map((img, i) => ({
       listingId,
       r2Key: img.r2Key,
-      url: `${process.env.R2_PUBLIC_URL}/${img.r2Key}`,
+      // r2Key stores the Cloudinary public_id; build delivery URL
+      url: img.r2Key.startsWith('http') ? img.r2Key : `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${img.r2Key}`,
       isPrimary: img.isPrimary || i === 0,
       sortOrder: i,
     }))
@@ -122,6 +127,7 @@ export class CatalogService {
   async searchListings(params: {
     q?: string
     categoryId?: string
+    categorySlug?: string
     priceMin?: number
     priceMax?: number
     condition?: string
@@ -133,18 +139,28 @@ export class CatalogService {
     limit?: number
   }) {
     const {
-      q, categoryId, priceMin, priceMax, condition, mode,
+      q, categoryId, categorySlug, priceMin, priceMax, condition, mode,
       lat, lng, radius = 25, page = 1, limit = 20,
     } = params
 
     const skip = (page - 1) * limit
+
+    // Resolve categorySlug → categoryId if needed
+    let resolvedCategoryId = categoryId
+    if (!resolvedCategoryId && categorySlug) {
+      const cat = await this.prisma.category.findUnique({
+        where: { slug: categorySlug.toLowerCase() },
+        select: { id: true },
+      })
+      if (cat) resolvedCategoryId = cat.id
+    }
 
     // Build WHERE clause
     const where: Prisma.ListingWhereInput = {
       status: 'ACTIVE',
     }
 
-    if (categoryId) where.categoryId = categoryId
+    if (resolvedCategoryId) where.categoryId = resolvedCategoryId
     if (condition) where.condition = condition as any
     if (mode === 'RENT') where.availableForRent = true
     if (mode === 'BUY') where.availableForSale = true
@@ -175,8 +191,14 @@ export class CatalogService {
           media: { where: { isPrimary: true }, take: 1 },
           category: true,
           vendor: {
-            select: { id: true, name: true },
-            include: { vendorProfile: { include: { location: true } } } as any,
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+              vendorProfile: {
+                include: { location: true },
+              },
+            },
           },
         },
         skip,
@@ -197,7 +219,14 @@ export class CatalogService {
         media: { orderBy: { sortOrder: 'asc' } },
         category: true,
         vendor: {
-          select: { id: true, name: true, avatar: true },
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            vendorProfile: {
+              include: { location: true, metrics: true },
+            },
+          },
         },
         reviews: {
           where: { isVisible: true },

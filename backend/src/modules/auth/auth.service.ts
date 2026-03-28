@@ -1,5 +1,6 @@
+import { randomInt } from 'crypto'
 import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../lib/jwt'
 
@@ -9,15 +10,17 @@ export class AuthService {
   // ─── OTP ─────────────────────────────────────────────────────────────────
 
   async requestOtp(phone: string) {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString()
+    const otp = randomInt(100000, 999999).toString()
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 min
 
     await this.prisma.otpRequest.create({
       data: { phone, otp, expiresAt },
     })
 
-    // Mock SMS — in prod call MSG91 API
-    console.log(`[OTP] Phone: ${phone}, OTP: ${otp}`)
+    // TODO: integrate MSG91 API for production SMS delivery
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[OTP] Phone: ${phone}, OTP: ${otp}`)
+    }
     return { message: 'OTP sent successfully' }
   }
 
@@ -32,7 +35,20 @@ export class AuthService {
       orderBy: { createdAt: 'desc' },
     })
 
-    if (!record) throw new Error('Invalid or expired OTP')
+    if (!record) {
+      // Track failed attempts for this phone to prevent brute force
+      const recentAttempts = await this.prisma.otpRequest.count({
+        where: {
+          phone,
+          isUsed: false,
+          createdAt: { gt: new Date(Date.now() - 5 * 60 * 1000) },
+        },
+      })
+      if (recentAttempts >= 5) {
+        throw Object.assign(new Error('Too many OTP attempts. Please wait 5 minutes.'), { statusCode: 429 })
+      }
+      throw Object.assign(new Error('Invalid or expired OTP'), { statusCode: 400 })
+    }
 
     await this.prisma.otpRequest.update({
       where: { id: record.id },
@@ -129,6 +145,24 @@ export class AuthService {
   async getMe(userId: string) {
     return this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        name: true,
+        avatar: true,
+        role: true,
+        isVendorApproved: true,
+        googleId: true,
+        createdAt: true,
+      },
+    })
+  }
+
+  async updateMe(userId: string, data: { name?: string; avatar?: string }) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data,
       select: {
         id: true,
         email: true,

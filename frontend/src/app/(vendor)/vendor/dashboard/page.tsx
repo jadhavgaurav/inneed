@@ -59,7 +59,7 @@ export default function VendorDashboardPage() {
           { icon: Clock, label: 'Pending Approvals', value: dashboard?.pendingApprovals || 0, color: 'text-yellow-600' },
           { icon: Package, label: 'Active Rentals', value: dashboard?.activeRentals || 0, color: 'text-green-600' },
           { icon: DollarSign, label: 'Total Earnings', value: formatINR(dashboard?.totalEarnings || 0), color: 'text-primary' },
-          { icon: CheckCircle, label: 'Listings', value: '-', color: 'text-blue-600' },
+          { icon: CheckCircle, label: 'Listings', value: dashboard?.listingsCount || 0, color: 'text-blue-600' },
         ].map(({ icon: Icon, label, value, color }) => (
           <div key={label} className="bg-white border border-border rounded-xl p-4">
             <div className={`${color} mb-2`}><Icon className="h-5 w-5" /></div>

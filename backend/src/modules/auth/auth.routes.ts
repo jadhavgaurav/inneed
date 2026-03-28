@@ -89,6 +89,16 @@ export default async function authRoutes(app: FastifyInstance) {
     return reply.send(user)
   })
 
+  // PATCH /auth/me
+  app.patch('/me', { preHandler: requireAuth }, async (req, reply) => {
+    const body = z.object({
+      name: z.string().min(2).max(50).optional(),
+      avatar: z.string().url().optional(),
+    }).parse(req.body)
+    const user = await svc.updateMe(req.user!.userId, body)
+    return reply.send(user)
+  })
+
   // POST /auth/logout
   app.post('/logout', async (req, reply) => {
     const refreshToken = req.cookies['refresh_token']

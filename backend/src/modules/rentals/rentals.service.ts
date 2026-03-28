@@ -144,13 +144,14 @@ export class RentalsService {
   }
 
   async getVendorDashboard(vendorUserId: string) {
-    const [pending, active, earnings] = await Promise.all([
+    const [pending, active, earnings, listingsCount] = await Promise.all([
       this.prisma.rental.count({ where: { vendorId: vendorUserId, status: 'RESERVED' } }),
       this.prisma.rental.count({ where: { vendorId: vendorUserId, status: { in: ['ACTIVE', 'DUE', 'OVERDUE'] } } }),
       this.prisma.ledgerEntry.aggregate({
         where: { vendorId: vendorUserId, type: 'EARNING' },
         _sum: { amount: true },
       }),
+      this.prisma.listing.count({ where: { vendorId: vendorUserId } }),
     ])
 
     const recentRentals = await this.prisma.rental.findMany({
@@ -167,6 +168,7 @@ export class RentalsService {
       pendingApprovals: pending,
       activeRentals: active,
       totalEarnings: earnings._sum.amount || 0,
+      listingsCount,
       recentRentals,
     }
   }

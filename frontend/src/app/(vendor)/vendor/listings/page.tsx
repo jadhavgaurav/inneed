@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Eye, Edit, Pause, Archive } from 'lucide-react'
@@ -54,7 +55,7 @@ export default function VendorListingsPage() {
           <div key={listing.id} className="bg-white border border-border rounded-xl p-4 flex items-center gap-4">
             <div className="w-16 h-16 bg-accent rounded-lg flex-shrink-0 overflow-hidden relative">
               {listing.media?.[0]?.url ? (
-                <img src={listing.media[0].url} alt={listing.title} className="w-full h-full object-cover" />
+                <Image src={listing.media[0].url} alt={listing.title} fill className="object-cover" sizes="64px" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No img</div>
               )}

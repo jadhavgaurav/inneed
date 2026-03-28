@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 
-const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'inneed-access-secret-change-in-prod'
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'inneed-refresh-secret-change-in-prod'
+const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!
+const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!
 
 export interface JwtPayload {
   userId: string

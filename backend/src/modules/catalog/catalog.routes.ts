@@ -45,6 +45,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     const query = z.object({
       q: z.string().optional(),
       categoryId: z.string().uuid().optional(),
+      categorySlug: z.string().optional(),
       priceMin: z.coerce.number().positive().optional(),
       priceMax: z.coerce.number().positive().optional(),
       condition: z.enum(['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'HEAVY_USE']).optional(),

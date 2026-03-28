@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INNEED — Production Deployment Guide</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #161618;
+    --surface2: #1e1e21;
+    --border: #2a2a2e;
+    --text: #e8e8ec;
+    --muted: #7a7a85;
+    --purple: #a855f7;
+    --purple-dim: #7c3aed22;
+    --green: #4ade80;
+    --yellow: #facc15;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --cyan: #22d3ee;
+    --code-bg: #111113;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  a { color: var(--purple); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 0;
+  }
+  .sidebar-logo {
+    padding: 0 20px 20px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--purple);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo span { color: var(--muted); font-size: 11px; font-weight: 400; display: block; margin-top: 2px; }
+  .nav-section { padding: 6px 20px 2px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .nav-link {
+    display: block;
+    padding: 7px 20px;
+    font-size: 13px;
+    color: var(--muted);
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .nav-link:hover { color: var(--text); background: var(--surface2); border-left-color: var(--purple); text-decoration: none; }
+  .main { flex: 1; padding: 48px 56px; max-width: 960px; }
+
+  /* Typography */
+  h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 22px; font-weight: 600; color: var(--purple); margin: 48px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 16px; font-weight: 600; margin: 24px 0 10px; color: var(--text); }
+  h4 { font-size: 13px; font-weight: 600; margin: 16px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  p { margin-bottom: 12px; color: var(--text); }
+
+  /* Hero */
+  .hero { margin-bottom: 40px; }
+  .hero h1 { background: linear-gradient(135deg, #a855f7, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero .subtitle { color: var(--muted); font-size: 16px; margin-top: 4px; }
+  .meta { display: flex; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
+  .meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-green { background: var(--green); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-purple { background: var(--purple); }
+
+  /* Callouts */
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 16px 0; font-size: 14px; border-left: 3px solid; }
+  .callout-info { background: #1e2a3a; border-color: var(--blue); }
+  .callout-warn { background: #2a2010; border-color: var(--yellow); }
+  .callout-success { background: #0f2a1a; border-color: var(--green); }
+  .callout-error { background: #2a1010; border-color: var(--red); }
+  .callout strong { font-weight: 600; }
+  .callout-info strong { color: var(--blue); }
+  .callout-warn strong { color: var(--yellow); }
+  .callout-success strong { color: var(--green); }
+  .callout-error strong { color: var(--red); }
+
+  /* Code */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    margin: 12px 0 20px;
+    position: relative;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  code { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; }
+  pre code { font-size: 13px; color: var(--text); }
+  :not(pre) > code { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 12px; color: var(--cyan); }
+  .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--purple); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13px; }
+  th { background: var(--surface2); padding: 10px 14px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .tag-req { background: #2a1515; color: var(--red); }
+  .tag-opt { background: #1a2a15; color: var(--green); }
+  .tag-free { background: #1a1a2a; color: var(--blue); }
+
+  /* Steps */
+  .steps { counter-reset: step; margin: 16px 0; }
+  .step { display: flex; gap: 16px; margin-bottom: 28px; }
+  .step-num {
+    counter-increment: step;
+    min-width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--purple-dim);
+    border: 1px solid var(--purple);
+    color: var(--purple);
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content { flex: 1; }
+  .step-title { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+  .step-time { font-size: 11px; color: var(--muted); margin-left: 8px; }
+
+  /* Architecture diagram */
+  .arch { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 16px 0; font-family: 'SF Mono', monospace; font-size: 12.5px; line-height: 1.7; overflow-x: auto; white-space: pre; color: var(--text); }
+
+  /* Cost table */
+  .cost-total { font-weight: 700; font-size: 15px; color: var(--green); }
+
+  /* Checklist */
+  .checklist { list-style: none; margin: 10px 0 16px; }
+  .checklist li { padding: 6px 0; padding-left: 24px; position: relative; font-size: 14px; border-bottom: 1px solid var(--border); }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li::before { content: '☐'; position: absolute; left: 0; color: var(--muted); }
+
+  /* Badge */
+  .badge { display: inline-flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; }
+
+  /* Env var sections */
+  .env-comment { color: #6a737d; }
+  .env-key { color: #e6db74; }
+  .env-val { color: #a6e22e; }
+  .env-required { color: var(--red); }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* Syntax highlight helpers */
+  .kw { color: #f92672; }
+  .str { color: #a6e22e; }
+  .cm { color: #75715e; }
+  .attr { color: #66d9ef; }
+  .num { color: #ae81ff; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    INNEED
+    <span>Deployment Guide v1.0</span>
+  </div>
+  <div class="nav-section">Overview</div>
+  <a class="nav-link" href="#summary">Executive Summary</a>
+  <a class="nav-link" href="#architecture">Architecture</a>
+  <a class="nav-link" href="#stack">Stack &amp; Costs</a>
+  <div class="nav-section">Code Changes</div>
+  <a class="nav-link" href="#code-changes">2 Files to Modify</a>
+  <div class="nav-section">Setup</div>
+  <a class="nav-link" href="#step-neon">1. Neon (Database)</a>
+  <a class="nav-link" href="#step-upstash">2. Upstash (Redis)</a>
+  <a class="nav-link" href="#step-railway">3. Railway (Backend)</a>
+  <a class="nav-link" href="#step-vercel">4. Vercel (Frontend)</a>
+  <a class="nav-link" href="#step-domain">5. Custom Domain</a>
+  <div class="nav-section">Env Vars</div>
+  <a class="nav-link" href="#env-railway">Railway Env Vars</a>
+  <a class="nav-link" href="#env-vercel">Vercel Env Vars</a>
+  <div class="nav-section">Operations</div>
+  <a class="nav-link" href="#migrations">Database Migrations</a>
+  <a class="nav-link" href="#deploys">Auto Deploys</a>
+  <a class="nav-link" href="#rollback">Rollback</a>
+  <a class="nav-link" href="#monitoring">Monitoring</a>
+  <a class="nav-link" href="#smoke-test">Smoke Tests</a>
+</nav>
+
+<!-- Main Content -->
+<main class="main">
+
+<!-- Hero -->
+<section class="hero" id="summary">
+  <h1>INNEED Production Deployment</h1>
+  <p class="subtitle">Vercel + Railway + Neon + Upstash — ~$5/month</p>
+  <div class="meta">
+    <span class="meta-item"><span class="dot dot-green"></span>Frontend: Vercel (free)</span>
+    <span class="meta-item"><span class="dot dot-yellow"></span>Backend: Railway (~$5/mo)</span>
+    <span class="meta-item"><span class="dot dot-purple"></span>DB: Neon (free tier)</span>
+  </div>
+</section>
+
+<div class="callout callout-success">
+  <strong>CTO Verdict:</strong> This is the right stack for MVP. Vercel was built by the Next.js team — it's the best place for your frontend. Railway runs your Docker backend without ops overhead. Neon gives you real PostgreSQL for free. Total fixed cost: <strong>~$5/month</strong> (just Railway compute).
+</div>
+
+<div class="callout callout-warn">
+  <strong>2 Code Fixes Already Applied:</strong> <code>frontend/next.config.ts</code> now proxies <code>/api/*</code> → Railway backend (fixes cross-origin cookie auth). <code>backend/prisma/schema.prisma</code> now has <code>directUrl</code> for Neon migration compatibility.
+</div>
+
+<!-- Architecture -->
+<h2 id="architecture">Architecture</h2>
+<div class="arch">Browser
+  │
+  ▼
+inneed.in  (Vercel CDN — global edge network)
+  │
+  ├─ /         → Next.js SSR/CSR pages
+  │
+  └─ /api/*   → Vercel Edge Rewrite (built-in, free)
+                      │  strips /api, forwards to Railway
+                      ▼
+               inneed-api.up.railway.app  (Fastify, Docker)
+                      │
+               ┌──────┴──────────────┐
+               │                     │
+          Neon PostgreSQL       Upstash Redis
+          (ap-south-1)         (ap-south-1)
+          Pooled conn            Rate limiting
+          + Direct conn
+
+External services (outbound from Railway only):
+  → Razorpay      payments.razorpay.com
+  → Cloudinary    api.cloudinary.com
+  → MSG91         api.msg91.com
+  → Resend        api.resend.com
+  → Sentry        o*.ingest.sentry.io
+  → Google OAuth  oauth2.googleapis.com</div>
+
+<h3>Why rewrites fix cookies</h3>
+<p>Your backend sets cookies with <code>sameSite: 'strict'</code>. Without the rewrite, the browser talks to Vercel (inneed.in) AND Railway (different domain) — strict cookies won't be sent cross-origin and auth breaks silently. With the rewrite, the browser only ever talks to <code>inneed.in</code>. Vercel's edge proxies the request to Railway server-side. The <code>Set-Cookie</code> arrives on <code>inneed.in</code>. Auth works perfectly with zero backend changes.</p>
+
+<!-- Stack & Costs -->
+<h2 id="stack">Stack &amp; Monthly Costs</h2>
+<table>
+  <thead><tr><th>Service</th><th>What it runs</th><th>Plan</th><th>Cost</th><th>Free limit</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Vercel</strong></td><td>Next.js 15 frontend</td><td>Hobby</td><td class="tag tag-free">$0</td><td>100 GB bandwidth, 6000 build-min/mo</td></tr>
+    <tr><td><strong>Railway</strong></td><td>Fastify Docker backend</td><td>Hobby</td><td style="color:var(--yellow)">~$5/mo</td><td>$5 credit, usage-based after</td></tr>
+    <tr><td><strong>Neon</strong></td><td>PostgreSQL database</td><td>Free</td><td class="tag tag-free">$0</td><td>0.5 GB storage, 1 compute unit</td></tr>
+    <tr><td><strong>Upstash</strong></td><td>Redis (rate limiting)</td><td>Free</td><td class="tag tag-free">$0</td><td>10,000 req/day, 256 MB</td></tr>
+    <tr><td><strong>Cloudinary</strong></td><td>Image storage &amp; CDN</td><td>Free</td><td class="tag tag-free">$0</td><td>25 GB storage, 25K transforms/mo</td></tr>
+    <tr><td><strong>Sentry</strong></td><td>Error monitoring</td><td>Free</td><td class="tag tag-free">$0</td><td>5,000 errors/mo</td></tr>
+    <tr><td><strong>Razorpay</strong></td><td>Payment gateway</td><td>Pay-per-use</td><td style="color:var(--muted)">2% / txn</td><td>No monthly fee</td></tr>
+    <tr><td><strong>MSG91</strong></td><td>OTP / SMS</td><td>Pay-per-use</td><td style="color:var(--muted)">₹0.18/SMS</td><td>—</td></tr>
+    <tr><td colspan="3"><strong>Total fixed</strong></td><td colspan="2" class="cost-total">~$5/month (~₹420)</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-info">
+  <strong>Scale triggers:</strong> Upgrade Neon to $19/mo when DB exceeds 0.5 GB or you need to disable scale-to-zero for pg-boss reliability. Upgrade Railway when RAM consistently &gt; 512 MB. Upgrade Cloudinary when images exceed 25 GB (means you have real traction — migrate to R2 then).
+</div>
+
+<!-- Code Changes -->
+<h2 id="code-changes">Code Changes Already Applied</h2>
+<p>Two files have been patched. Here's what changed and why.</p>
+
+<h3>1. <code>frontend/next.config.ts</code> — API proxy rewrite</h3>
+<p>Added inside <code>nextConfig</code>. Vercel's edge rewrites this server-side — no browser ever talks directly to Railway:</p>
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="attr">async</span> <span class="kw">rewrites</span>() {
+  <span class="kw">return</span> [
+    {
+      source: <span class="str">'/api/:path*'</span>,
+      destination: <span class="str">`${process.env.BACKEND_URL}/:path*`</span>,
+    },
+  ]
+},</code></pre>
+
+<p><code>BACKEND_URL</code> is a server-side env var (no <code>NEXT_PUBLIC_</code> prefix) — set it in Vercel dashboard to your Railway URL. It is never exposed to the browser.</p>
+
+<h3>2. <code>backend/prisma/schema.prisma</code> — Neon directUrl</h3>
+<p>Neon's pooled connections cannot run schema migrations. Prisma needs a direct (non-pooled) connection for <code>prisma migrate deploy</code>:</p>
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="kw">datasource</span> db {
+  provider  = <span class="str">"postgresql"</span>
+  url       = <span class="attr">env</span>(<span class="str">"DATABASE_URL"</span>)    <span class="cm">// pooled connection — runtime queries</span>
+  directUrl = <span class="attr">env</span>(<span class="str">"DIRECT_URL"</span>)      <span class="cm">// direct connection — migrations only</span>
+}</code></pre>
+
+<hr>
+
+<!-- Step 1: Neon -->
+<h2 id="step-neon">Step 1 — Neon (PostgreSQL)</h2>
+<div class="callout callout-info"><strong>Time:</strong> ~5 minutes &nbsp;&nbsp; <strong>Cost:</strong> Free</div>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Create account &amp; project</div>
+      <p>Go to <strong>neon.tech</strong> → Sign up → <strong>New Project</strong></p>
+      <table>
+        <tr><th>Field</th><th>Value</th></tr>
+        <tr><td>Project name</td><td><code>inneed-prod</code></td></tr>
+        <tr><td>Region</td><td><strong>AWS ap-south-1 (Mumbai)</strong> — closest to India, better latency for Razorpay/MSG91</td></tr>
+        <tr><td>PostgreSQL version</td><td>16</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <div class="step-title">Get both connection strings</div>
+      <p>In your Neon dashboard → <strong>Connection Details</strong>. You need TWO strings:</p>
+      <table>
+        <tr><th>Variable</th><th>Where to find it</th><th>Used for</th></tr>
+        <tr><td><code>DATABASE_URL</code></td><td>Toggle → <strong>Pooled connection</strong> (shows pgbouncer endpoint)</td><td>Runtime app queries (Prisma client)</td></tr>
+        <tr><td><code>DIRECT_URL</code></td><td>Toggle → <strong>Direct connection</strong> (shows neon.tech endpoint)</td><td>Migrations only (<code>prisma migrate deploy</code>)</td></tr>
+      </table>
+      <p>Both look like:</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="cm"># Pooled (DATABASE_URL)</span>
+postgresql://user:password@ep-cool-name-123456.pooler.ap-south-1.aws.neon.tech/inneed?sslmode=require
+
+<span class="cm"># Direct (DIRECT_URL)</span>
+postgresql://user:password@ep-cool-name-123456.ap-south-1.aws.neon.tech/inneed?sslmode=require</code></pre>
+      <div class="callout callout-warn"><strong>Save both strings now.</strong> You'll paste them into Railway env vars in Step 3.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <div class="step-title">(Optional) Create a staging branch</div>
+      <p>Neon supports DB branching — free. In the dashboard → <strong>Branches</strong> → <strong>New Branch</strong> → name it <code>staging</code>. Use the staging branch's connection string in a Railway staging service to test migrations safely before production.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Step 2: Upstash -->
+<h2 id="step-upstash">Step 2 — Upstash (Redis)</h2>
+<div class="callout callout-info"><strong>Time:</strong> ~3 minutes &nbsp;&nbsp; <strong>Cost:</strong> Free (10K req/day)</div>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Create database</div>
+      <p>Go to <strong>upstash.com</strong> → Sign up → <strong>Create Database</strong></p>
+      <table>
+        <tr><th>Field</th><th>Value</th></tr>
+        <tr><td>Name</td><td><code>inneed-redis</code></td></tr>
+        <tr><td>Region</td><td><strong>ap-south-1 (Mumbai)</strong></td></tr>
+        <tr><td>TLS</td><td>Enabled (required)</td></tr>
+        <tr><td>Eviction</td><td>No eviction (rate limit data must not be dropped)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <div class="step-title">Get Redis URL</div>
+      <p>In database details → <strong>Connect</strong> tab → scroll to <strong>ioredis</strong> section. Copy the URL in this format:</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>rediss://default:XXXXXXXXXXXXXXXXXXXXXXXXXX@your-db.upstash.io:6380</code></pre>
+      <p>This is your <code>REDIS_URL</code> env var for Railway. The <code>rediss://</code> (double s) means TLS.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Step 3: Railway -->
+<h2 id="step-railway">Step 3 — Railway (Backend)</h2>
+<div class="callout callout-info"><strong>Time:</strong> ~15 minutes &nbsp;&nbsp; <strong>Cost:</strong> ~$5/month</div>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Create account &amp; project</div>
+      <p>Go to <strong>railway.app</strong> → Sign up with GitHub → <strong>New Project</strong> → <strong>Deploy from GitHub repo</strong> → select your INNEED repo.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <div class="step-title">Configure service settings</div>
+      <p>Railway will detect your repo. In the service settings:</p>
+      <table>
+        <tr><th>Setting</th><th>Value</th></tr>
+        <tr><td>Root Directory</td><td><code>/</code> (repo root — Dockerfile copies shared + backend)</td></tr>
+        <tr><td>Dockerfile Path</td><td><code>backend/Dockerfile</code></td></tr>
+        <tr><td>Start Command</td><td>Leave blank (Dockerfile CMD handles it)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <div class="step-title">Set all environment variables</div>
+      <p>In Railway service → <strong>Variables</strong> tab → add all vars from the <a href="#env-railway">Railway Env Vars</a> section below.</p>
+      <div class="callout callout-warn"><strong>Critical:</strong> Set <code>DATABASE_URL</code> (pooled) AND <code>DIRECT_URL</code> (direct) — both from Neon Step 2. Without <code>DIRECT_URL</code>, migrations will fail.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <div class="step-title">Set deploy command to run migrations automatically</div>
+      <p>In Railway service → <strong>Settings</strong> → <strong>Deploy</strong> → set <strong>Start Command</strong>:</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>cd /app/backend && npx prisma migrate deploy && node dist/index.js</code></pre>
+      <p>This runs pending migrations before starting the server on every deploy — safe because <code>migrate deploy</code> is idempotent (skips already-applied migrations).</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-content">
+      <div class="step-title">Trigger first deploy &amp; run seed</div>
+      <p>Railway auto-deploys when you push to <code>main</code>. After the first successful deploy:</p>
+      <p>In Railway → service → <strong>Shell</strong> tab (or via Railway CLI), run the one-time seed:</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>cd /app/backend && npx tsx prisma/seed.ts</code></pre>
+      <div class="callout callout-warn"><strong>Run seed only once.</strong> It creates the admin user, default categories, and sample listings. Running it twice will cause duplicate key errors.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-content">
+      <div class="step-title">Copy your Railway public URL</div>
+      <p>In Railway service → <strong>Settings</strong> → <strong>Networking</strong> → enable <strong>Public Networking</strong>. You'll get a URL like:</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>https://inneed-production-xxxx.up.railway.app</code></pre>
+      <p>Save this — it's your <code>BACKEND_URL</code> for Vercel.</p>
+      <p>Verify the backend is live:</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>curl https://inneed-production-xxxx.up.railway.app/health
+<span class="cm"># Expected: {"status":"ok","timestamp":"...","version":"1.0.0"}</span></code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- Step 4: Vercel -->
+<h2 id="step-vercel">Step 4 — Vercel (Frontend)</h2>
+<div class="callout callout-info"><strong>Time:</strong> ~10 minutes &nbsp;&nbsp; <strong>Cost:</strong> Free</div>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Import project</div>
+      <p>Go to <strong>vercel.com</strong> → Sign up with GitHub → <strong>New Project</strong> → import INNEED repo.</p>
+      <table>
+        <tr><th>Setting</th><th>Value</th></tr>
+        <tr><td>Root Directory</td><td><code>frontend</code></td></tr>
+        <tr><td>Framework Preset</td><td>Next.js (auto-detected)</td></tr>
+        <tr><td>Build Command</td><td>Leave default (<code>next build</code>)</td></tr>
+        <tr><td>Output Directory</td><td>Leave default (<code>.next</code>)</td></tr>
+        <tr><td>Node.js version</td><td>20.x</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <div class="step-title">Add environment variables</div>
+      <p>Before clicking Deploy, click <strong>Environment Variables</strong> and add all vars from the <a href="#env-vercel">Vercel Env Vars</a> section below. <strong>Critical: set <code>BACKEND_URL</code> to your Railway URL from Step 3.</strong></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <div class="step-title">Deploy</div>
+      <p>Click <strong>Deploy</strong>. Vercel builds Next.js and deploys to its global CDN. Build takes ~2-3 minutes. You'll get a URL like <code>inneed.vercel.app</code>.</p>
+      <p>Test the API proxy is working:</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="cm"># Should return catalog listings (proxied via Vercel → Railway)</span>
+curl https://inneed.vercel.app/api/items?limit=5</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- Step 5: Domain -->
+<h2 id="step-domain">Step 5 — Custom Domain &amp; SSL</h2>
+<div class="callout callout-info"><strong>Time:</strong> ~10 minutes + DNS propagation (up to 24h) &nbsp;&nbsp; <strong>Cost:</strong> Free (Let's Encrypt via Vercel)</div>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Add domain in Vercel</div>
+      <p>Vercel dashboard → project → <strong>Settings</strong> → <strong>Domains</strong> → add <code>inneed.in</code> and <code>www.inneed.in</code>.</p>
+      <p>Vercel will show you the DNS records to add:</p>
+      <table>
+        <tr><th>Type</th><th>Name</th><th>Value</th></tr>
+        <tr><td><code>A</code></td><td><code>@</code></td><td><code>76.76.21.21</code> (Vercel's IP)</td></tr>
+        <tr><td><code>CNAME</code></td><td><code>www</code></td><td><code>cname.vercel-dns.com</code></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <div class="step-title">Add DNS records at your registrar</div>
+      <p>Log in to wherever you bought <code>inneed.in</code> (GoDaddy, Namecheap, etc.) and add the A record and CNAME above. DNS propagation typically takes 5-30 minutes, up to 24h.</p>
+      <p>Check propagation:</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>dig inneed.in A +short
+<span class="cm"># Should return: 76.76.21.21</span></code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <div class="step-title">SSL is automatic</div>
+      <p>Vercel provisions a Let's Encrypt certificate automatically once DNS resolves. HTTPS is live within minutes of DNS propagating. No config needed.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <div class="step-title">Update FRONTEND_URL on Railway</div>
+      <p>After your domain is live, update Railway env var:</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>FRONTEND_URL=https://inneed.in</code></pre>
+      <p>This is the Fastify CORS origin. Railway will auto-redeploy with the new value.</p>
+      <p>Also update <code>NEXT_PUBLIC_APP_URL</code> on Vercel to <code>https://inneed.in</code>.</p>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- Railway Env Vars -->
+<h2 id="env-railway">Railway Environment Variables</h2>
+<p>Set these in Railway → service → <strong>Variables</strong> tab. Click <strong>Raw Editor</strong> to paste all at once.</p>
+
+<div class="callout callout-error">
+  <strong>Never commit these to git.</strong> Railway stores them securely. Generate secrets with: <code>openssl rand -base64 48</code>
+</div>
+
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="cm"># ── Server ──────────────────────────────────────────────────────────────────────</span>
+<span class="env-key">NODE_ENV</span>=<span class="env-val">production</span>
+<span class="env-key">PORT</span>=<span class="env-val">3001</span>
+<span class="env-key">HOST</span>=<span class="env-val">0.0.0.0</span>
+<span class="env-key">FRONTEND_URL</span>=<span class="env-val">https://inneed.in</span>               <span class="cm"># Fastify CORS origin — update after domain setup</span>
+
+<span class="cm"># ── Database (Neon) ──────────────────────────────────────────────────────────────</span>
+<span class="env-required"># REQUIRED — get both from Neon dashboard → Connection Details</span>
+<span class="env-key">DATABASE_URL</span>=<span class="env-val">postgresql://user:pass@ep-xxx.pooler.ap-south-1.aws.neon.tech/inneed?sslmode=require</span>
+<span class="env-key">DIRECT_URL</span>=<span class="env-val">postgresql://user:pass@ep-xxx.ap-south-1.aws.neon.tech/inneed?sslmode=require</span>
+
+<span class="cm"># ── Redis (Upstash) ──────────────────────────────────────────────────────────────</span>
+<span class="env-key">REDIS_URL</span>=<span class="env-val">rediss://default:PASSWORD@your-db.upstash.io:6380</span>
+
+<span class="cm"># ── Auth Secrets — generate with: openssl rand -base64 48 ───────────────────────</span>
+<span class="env-required"># REQUIRED — use long random values, never reuse between envs</span>
+<span class="env-key">JWT_ACCESS_SECRET</span>=<span class="env-val">CHANGE_ME_min_32_chars_run_openssl_rand_-base64_48</span>
+<span class="env-key">JWT_REFRESH_SECRET</span>=<span class="env-val">CHANGE_ME_min_32_chars_run_openssl_rand_-base64_48</span>
+<span class="env-key">COOKIE_SECRET</span>=<span class="env-val">CHANGE_ME_min_32_chars_run_openssl_rand_-base64_48</span>
+
+<span class="cm"># ── Razorpay (use rzp_live_* for production) ─────────────────────────────────────</span>
+<span class="env-key">RAZORPAY_KEY_ID</span>=<span class="env-val">rzp_live_XXXXXXXXXXXXXXXX</span>
+<span class="env-key">RAZORPAY_KEY_SECRET</span>=<span class="env-val">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</span>
+<span class="env-key">RAZORPAY_WEBHOOK_SECRET</span>=<span class="env-val">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</span>
+<span class="cm"># Get webhook secret: Razorpay Dashboard → Webhooks → Add webhook URL → https://inneed.in/api/payments/webhook</span>
+
+<span class="cm"># ── MSG91 (OTP / SMS) ────────────────────────────────────────────────────────────</span>
+<span class="env-key">MSG91_AUTH_KEY</span>=<span class="env-val">XXXXXXXXXXXXXXXXXXXXXXXX</span>
+<span class="env-key">MSG91_TEMPLATE_ID</span>=<span class="env-val">XXXXXXXXXXXXXXXXXXXXXXXX</span>
+
+<span class="cm"># ── Google OAuth ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># Create at: console.cloud.google.com → APIs → Credentials → OAuth 2.0 Client ID</span>
+<span class="cm"># Authorized JS origins: https://inneed.in</span>
+<span class="env-key">GOOGLE_CLIENT_ID</span>=<span class="env-val">XXXXXXXXXX.apps.googleusercontent.com</span>
+
+<span class="cm"># ── Cloudinary (image storage) ───────────────────────────────────────────────────</span>
+<span class="cm"># Get from: cloudinary.com → Dashboard → Account Details</span>
+<span class="env-key">CLOUDINARY_CLOUD_NAME</span>=<span class="env-val">your_cloud_name</span>
+<span class="env-key">CLOUDINARY_API_KEY</span>=<span class="env-val">XXXXXXXXXXXXXXXXXXXXXXXX</span>
+<span class="env-key">CLOUDINARY_API_SECRET</span>=<span class="env-val">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</span>
+
+<span class="cm"># ── Resend (transactional email) ─────────────────────────────────────────────────</span>
+<span class="cm"># Get from: resend.com → API Keys. Verify domain inneed.in first for deliverability.</span>
+<span class="env-key">RESEND_API_KEY</span>=<span class="env-val">re_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</span>
+<span class="env-key">RESEND_FROM_EMAIL</span>=<span class="env-val">noreply@inneed.in</span>
+
+<span class="cm"># ── Sentry (error monitoring) ────────────────────────────────────────────────────</span>
+<span class="cm"># Get from: sentry.io → Settings → Projects → your project → Client Keys (DSN)</span>
+<span class="env-key">SENTRY_DSN</span>=<span class="env-val">https://XXXXXXXX@XXXXXXXX.ingest.sentry.io/XXXXXXXX</span></code></pre>
+
+<h4>Quick secret generator commands</h4>
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="cm"># Generate JWT_ACCESS_SECRET</span>
+openssl rand -base64 48
+
+<span class="cm"># Generate JWT_REFRESH_SECRET</span>
+openssl rand -base64 48
+
+<span class="cm"># Generate COOKIE_SECRET</span>
+openssl rand -base64 48</code></pre>
+
+<!-- Vercel Env Vars -->
+<h2 id="env-vercel">Vercel Environment Variables</h2>
+<p>Set these in Vercel → project → <strong>Settings</strong> → <strong>Environment Variables</strong>. Apply to <strong>Production</strong>, <strong>Preview</strong>, and <strong>Development</strong> as appropriate.</p>
+
+<div class="callout callout-warn">
+  <strong>NEXT_PUBLIC_* vars are baked into the browser bundle at build time.</strong> Changing them requires a redeploy. Non-prefixed vars (<code>BACKEND_URL</code>) are server-side only and never sent to the browser.
+</div>
+
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="cm"># ── Server-side only (never exposed to browser) ──────────────────────────────────</span>
+<span class="env-key">BACKEND_URL</span>=<span class="env-val">https://inneed-production-xxxx.up.railway.app</span>
+<span class="cm"># The Railway backend URL (no /api suffix — rewrites add the path)</span>
+
+<span class="cm"># ── Client-side (baked into bundle at build time) ────────────────────────────────</span>
+<span class="env-key">NEXT_PUBLIC_API_URL</span>=<span class="env-val">/api</span>
+<span class="cm"># Relative path — axios sends /api/auth/login → Vercel rewrite → Railway /auth/login</span>
+
+<span class="env-key">NEXT_PUBLIC_APP_URL</span>=<span class="env-val">https://inneed.in</span>
+<span class="cm"># Used for SEO meta tags, Open Graph URLs, auth redirects</span>
+
+<span class="env-key">NEXT_PUBLIC_GOOGLE_CLIENT_ID</span>=<span class="env-val">XXXXXXXXXX.apps.googleusercontent.com</span>
+<span class="cm"># Same as backend GOOGLE_CLIENT_ID — must match</span>
+
+<span class="env-key">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</span>=<span class="env-val">AIzaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</span>
+<span class="cm"># Google Maps Platform → APIs & Services → Credentials → API key
+# Restrict key: HTTP referrers → https://inneed.in/*</span>
+
+<span class="env-key">NEXT_PUBLIC_RAZORPAY_KEY_ID</span>=<span class="env-val">rzp_live_XXXXXXXXXXXXXXXX</span>
+<span class="cm"># Public key only — safe to expose. Backend uses the secret key.</span>
+
+<span class="env-key">NEXT_PUBLIC_SENTRY_DSN</span>=<span class="env-val">https://XXXXXXXX@XXXXXXXX.ingest.sentry.io/XXXXXXXX</span>
+<span class="cm"># Can be same DSN as backend, or a separate frontend project in Sentry</span>
+
+<span class="cm"># ── Sentry source map upload (optional but recommended) ──────────────────────────</span>
+<span class="env-key">SENTRY_AUTH_TOKEN</span>=<span class="env-val">sntrys_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</span>
+<span class="cm"># Get from: sentry.io → Settings → Auth Tokens → Create new token
+# Needed for source map upload during build so Sentry shows real line numbers</span></code></pre>
+
+<hr>
+
+<!-- Migrations -->
+<h2 id="migrations">Database Migrations</h2>
+
+<h3>Automatic (on every deploy)</h3>
+<p>The Railway start command runs migrations before starting the server:</p>
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>cd /app/backend && npx prisma migrate deploy && node dist/index.js</code></pre>
+<p><code>prisma migrate deploy</code> is safe to run on every deploy — it checks which migrations have already been applied and skips them. If there are no new migrations, it starts immediately.</p>
+
+<h3>Manual migration (Railway Shell)</h3>
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="cm"># Run from Railway service Shell tab</span>
+cd /app/backend
+
+<span class="cm"># Apply pending migrations</span>
+npx prisma migrate deploy
+
+<span class="cm"># Check migration status</span>
+npx prisma migrate status
+
+<span class="cm"># One-time seed (run only once after first deploy)</span>
+npx tsx prisma/seed.ts</code></pre>
+
+<h3>Safe migration rules</h3>
+<table>
+  <tr><th>Rule</th><th>Why</th></tr>
+  <tr><td>Only <code>migrate deploy</code> in production, never <code>migrate dev</code></td><td><code>migrate dev</code> can drop and recreate tables</td></tr>
+  <tr><td>Write additive migrations (add columns, never drop in same PR)</td><td>Old app containers may still be running during rollout window</td></tr>
+  <tr><td>New NOT NULL columns must have a DEFAULT value</td><td>Existing rows need a value; old app code doesn't send it</td></tr>
+  <tr><td>Test migrations on Neon staging branch first</td><td>Catch breakage before it hits production</td></tr>
+</table>
+
+<!-- Auto Deploys -->
+<h2 id="deploys">Automated Deploys</h2>
+<p>Both platforms auto-deploy on every push to <code>main</code>. No CI/CD configuration needed beyond connecting your GitHub repo.</p>
+
+<table>
+  <tr><th>Event</th><th>Vercel</th><th>Railway</th></tr>
+  <tr><td>Push to <code>main</code></td><td>Rebuilds Next.js, deploys to CDN (~2 min)</td><td>Rebuilds Docker image, replaces container (~4 min)</td></tr>
+  <tr><td>PR opened</td><td>Creates preview URL (<code>pr-42-inneed.vercel.app</code>)</td><td>No preview by default</td></tr>
+  <tr><td>PR merged to main</td><td>Production deploy triggered automatically</td><td>Production deploy triggered automatically</td></tr>
+</table>
+
+<div class="callout callout-info">
+  <strong>GitHub Actions CI still runs</strong> on every push (lint + build check). If it fails, Railway/Vercel will still deploy (they don't depend on Actions). To block bad deploys, add a Railway deploy hook that waits for CI — but this is optional for early stage.
+</div>
+
+<!-- Rollback -->
+<h2 id="rollback">Rollback</h2>
+
+<h3>Frontend (Vercel) — one click</h3>
+<p>Vercel stores every deployment. Go to Vercel dashboard → project → <strong>Deployments</strong> → find the last good deploy → click <strong>⋯</strong> → <strong>Promote to Production</strong>. Done in 30 seconds.</p>
+
+<h3>Backend (Railway) — redeploy previous SHA</h3>
+<p>Railway dashboard → service → <strong>Deployments</strong> tab → find the last good deploy → click <strong>Redeploy</strong>. Railway will rebuild from that git SHA.</p>
+
+<h3>Code rollback (via git)</h3>
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="cm"># Revert the bad commit and push</span>
+git revert HEAD --no-edit
+git push origin main
+<span class="cm"># Both Railway and Vercel auto-deploy from the revert commit</span></code></pre>
+
+<h3>Database rollback</h3>
+<p>There is no automatic database rollback. Prisma does not support down migrations. Strategy:</p>
+<ul style="margin: 8px 0 12px 20px; font-size: 14px; line-height: 2;">
+  <li>If migration added columns → safe to rollback app code (old code ignores new columns)</li>
+  <li>If migration dropped columns → write a new forward migration that re-adds them, push to main</li>
+  <li>For catastrophic data loss → restore from Neon's point-in-time recovery (available on paid plans)</li>
+</ul>
+
+<!-- Monitoring -->
+<h2 id="monitoring">Monitoring &amp; Alerting</h2>
+
+<h3>Sentry (already integrated in code)</h3>
+<p>Just set the env vars. Sentry starts capturing automatically.</p>
+<p>Recommended alert rules in Sentry dashboard:</p>
+<ul style="margin: 8px 0 12px 20px; font-size: 14px; line-height: 2;">
+  <li><strong>New issue detected</strong> → send email immediately</li>
+  <li><strong>Error rate &gt; 5/minute</strong> → send email + Slack/Telegram</li>
+  <li><strong>P95 latency &gt; 2s</strong> → review performance</li>
+</ul>
+
+<h3>UptimeRobot (free external monitor)</h3>
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Set up monitor</div>
+      <p>Sign up at <strong>uptimerobot.com</strong> → <strong>Add New Monitor</strong></p>
+      <table>
+        <tr><th>Field</th><th>Value</th></tr>
+        <tr><td>Monitor Type</td><td>HTTP(s)</td></tr>
+        <tr><td>URL</td><td><code>https://inneed.in/api/health</code></td></tr>
+        <tr><td>Monitoring Interval</td><td>5 minutes (free tier)</td></tr>
+        <tr><td>Alert Contacts</td><td>Your email + Telegram bot (optional)</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<h3>Railway built-in metrics</h3>
+<p>Railway dashboard → service → <strong>Metrics</strong> tab shows CPU, RAM, and request counts in real-time. No setup required.</p>
+
+<h3>Vercel Analytics</h3>
+<p>Vercel dashboard → project → <strong>Analytics</strong> tab → enable Web Vitals tracking. Shows Core Web Vitals (LCP, FID, CLS) for real users. Free on Hobby plan.</p>
+
+<!-- Smoke Tests -->
+<h2 id="smoke-test">Post-Deploy Smoke Test Checklist</h2>
+<p>Run through this after every production deploy:</p>
+
+<h3>Backend</h3>
+<ul class="checklist">
+  <li><code>curl https://inneed.in/api/health</code> returns <code>{"status":"ok"}</code></li>
+  <li><code>curl https://inneed.in/api/items?limit=3</code> returns listing array</li>
+  <li>Sentry dashboard shows no new errors</li>
+  <li>UptimeRobot monitor shows UP</li>
+  <li>Railway metrics show container running (not restarting)</li>
+</ul>
+
+<h3>Frontend</h3>
+<ul class="checklist">
+  <li>Homepage loads at <code>https://inneed.in</code></li>
+  <li>Hero search works → navigates to <code>/search</code> with results</li>
+  <li>Item detail page loads images from Cloudinary</li>
+  <li>Login page renders correctly</li>
+  <li>Google OAuth button appears (checks NEXT_PUBLIC_GOOGLE_CLIENT_ID)</li>
+  <li>No console errors in browser DevTools</li>
+  <li>Network tab: <code>/api/*</code> requests return 200 (not 502 or CORS errors)</li>
+</ul>
+
+<h3>Auth flow</h3>
+<ul class="checklist">
+  <li>Register new user → succeeds, redirects to home</li>
+  <li>Login with test account (from seed) → succeeds, user dropdown appears</li>
+  <li>Refresh page → user stays logged in (cookie persists)</li>
+  <li>Logout → user cleared, auth-only pages redirect to login</li>
+</ul>
+
+<h3>Vendor flow</h3>
+<ul class="checklist">
+  <li>Login as vendor account (from seed) → vendor dashboard accessible</li>
+  <li>Listings page loads vendor's listings</li>
+</ul>
+
+<h3>Admin flow</h3>
+<ul class="checklist">
+  <li>Login as admin account (from seed) → admin area accessible</li>
+  <li>Vendor approval page loads</li>
+</ul>
+
+<hr>
+
+<h2>Test Account Credentials</h2>
+<p>Created by <code>prisma/seed.ts</code> during first deploy:</p>
+<table>
+  <tr><th>Role</th><th>Email</th><th>Password</th></tr>
+  <tr><td>Customer</td><td><code>customer@inneed.in</code></td><td><code>Customer@123</code></td></tr>
+  <tr><td>Vendor</td><td><code>vendor@inneed.in</code></td><td><code>Vendor@123</code></td></tr>
+  <tr><td>Admin</td><td><code>admin@inneed.in</code></td><td><code>Admin@123</code></td></tr>
+</table>
+<div class="callout callout-error"><strong>Change these passwords immediately after first login in production.</strong> Or better — delete the seed accounts and create real ones.</div>
+
+<h2>Support &amp; Next Steps</h2>
+<table>
+  <tr><th>When you hit this</th><th>Do this</th></tr>
+  <tr><td>Neon storage &gt; 0.5 GB</td><td>Upgrade to Neon Launch ($19/mo) — also disables scale-to-zero, fixes pg-boss reliability</td></tr>
+  <tr><td>Railway RAM consistently &gt; 512 MB</td><td>Upgrade Railway plan or optimize Fastify memory usage</td></tr>
+  <tr><td>Cloudinary storage &gt; 25 GB or transforms &gt; 25K/mo</td><td>Migrate upload service to Cloudflare R2 (S3-compatible)</td></tr>
+  <tr><td>Vercel Hobby bandwidth limit (100 GB)</td><td>Upgrade to Vercel Pro ($20/mo) or add Cloudflare in front of Vercel (free)</td></tr>
+  <tr><td>Need staging environment</td><td>Create Neon branch + Railway staging service + Vercel preview URL (already auto-created for PRs)</td></tr>
+</table>
+
+</main>
+</div>
+
+<script>
+function copyCode(btn) {
+  const pre = btn.parentElement;
+  const code = pre.querySelector('code');
+  const text = code.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>

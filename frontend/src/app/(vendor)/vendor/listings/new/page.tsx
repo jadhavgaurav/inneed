@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
+import { ImageUpload } from '@/components/upload/ImageUpload'
 
 const schema = z.object({
   categoryId: z.string().uuid('Select a category'),
@@ -37,6 +38,7 @@ const CONDITIONS = [
 export default function NewListingPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
+  const [images, setImages] = useState<{ publicId: string; url: string }[]>([])
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -61,6 +63,15 @@ export default function NewListingPage() {
         buyPrice: data.buyPrice || undefined,
       }
       const res = await api.post('/vendor/listings', payload)
+      const listingId = res.data.id
+
+      // Upload images if any
+      if (images.length > 0) {
+        await api.post(`/vendor/listings/${listingId}/images`, {
+          images: images.map((img, i) => ({ r2Key: img.publicId, isPrimary: i === 0 })),
+        })
+      }
+
       toast.success('Listing created!')
       router.push('/vendor/listings')
     } catch (e: any) {
@@ -156,6 +167,16 @@ export default function NewListingPage() {
             <input {...register('securityDeposit')} type="number" min="0" placeholder="2000" className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
             <p className="text-xs text-muted-foreground mt-1">Collected and held until item is returned in good condition</p>
           </div>
+        </div>
+
+        {/* Images */}
+        <div className="bg-white border border-border rounded-xl p-6">
+          <ImageUpload
+            value={images}
+            onChange={setImages}
+            maxImages={6}
+            label="Listing Photos (up to 6)"
+          />
         </div>
 
         <button type="submit" disabled={isSubmitting} className="w-full bg-primary text-white py-3 rounded-xl font-medium hover:opacity-90 disabled:opacity-50">

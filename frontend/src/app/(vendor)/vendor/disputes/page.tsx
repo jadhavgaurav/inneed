@@ -99,7 +99,7 @@ export default function VendorDisputesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['vendor-disputes'],
     queryFn: () =>
-      api.get('/disputes/admin/disputes').then(r => r.data as { disputes: Dispute[] }),
+      api.get('/disputes/vendor/disputes').then(r => r.data as { disputes: Dispute[] }),
   })
 
   const disputes = data?.disputes ?? []

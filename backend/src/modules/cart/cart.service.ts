@@ -30,6 +30,25 @@ export class CartService {
     let cart = await this.prisma.cart.findUnique({ where: { userId } })
     if (!cart) cart = await this.prisma.cart.create({ data: { userId } })
 
+    // Check if the same listing+mode already exists in cart
+    const existingItem = await this.prisma.cartItem.findFirst({
+      where: { cartId: cart.id, listingId: data.listingId, mode: data.mode },
+    })
+
+    if (existingItem) {
+      // Update quantity instead of creating a duplicate
+      return this.prisma.cartItem.update({
+        where: { id: existingItem.id },
+        data: {
+          quantity: existingItem.quantity + data.quantity,
+          startDate: data.startDate ? new Date(data.startDate) : existingItem.startDate,
+          endDate: data.endDate ? new Date(data.endDate) : existingItem.endDate,
+          damageProtection: data.damageProtection ?? existingItem.damageProtection,
+        },
+        include: { listing: { include: { pricing: true } } },
+      })
+    }
+
     return this.prisma.cartItem.create({
       data: {
         cartId: cart.id,

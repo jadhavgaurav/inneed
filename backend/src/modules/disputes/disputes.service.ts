@@ -1,4 +1,5 @@
 import { PrismaClient, DisputeStatus, DisputeType } from '@prisma/client'
+import { sanitizeText } from '../../lib/sanitize'
 
 function generateDisputeNumber() {
   return `DSP-${Date.now().toString(36).toUpperCase()}`
@@ -28,7 +29,7 @@ export class DisputesService {
           filedBy: userId,
           againstVendorId: data.againstVendorId,
           type: data.type,
-          description: data.description,
+          description: sanitizeText(data.description),
           status: DisputeStatus.OPEN,
         },
       })
@@ -84,8 +85,27 @@ export class DisputesService {
     }
 
     return this.prisma.disputeEvidence.create({
-      data: { disputeId, userId, message: data.message, images: data.imageUrls ?? [] },
+      data: { disputeId, userId, message: sanitizeText(data.message), images: data.imageUrls ?? [] },
     })
+  }
+
+  async getVendorDisputes(vendorUserId: string, page: number, limit: number) {
+    const where = { againstVendorId: vendorUserId }
+    const [disputes, total] = await Promise.all([
+      this.prisma.dispute.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          order: { select: { id: true, orderNumber: true } },
+          filer: { select: { id: true, name: true, email: true } },
+          evidence: { orderBy: { createdAt: 'asc' } },
+        },
+      }),
+      this.prisma.dispute.count({ where }),
+    ])
+    return { disputes, total, page, limit, pages: Math.ceil(total / limit) }
   }
 
   async getAdminDisputes(page: number, limit: number, status?: string) {
@@ -122,7 +142,7 @@ export class DisputesService {
         where: { id },
         data: {
           status: DisputeStatus.RESOLVED,
-          resolution: data.resolution,
+          resolution: sanitizeText(data.resolution),
           resolvedBy: adminUserId,
           resolvedAt: new Date(),
         },

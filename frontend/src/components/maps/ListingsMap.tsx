@@ -26,7 +26,7 @@ const MAP_CONTAINER_STYLE = { width: '100%', height: '500px' }
 
 export default function ListingsMap({ listings, center }: ListingsMapProps) {
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || '',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
   })
 
   const [selected, setSelected] = useState<Listing | null>(null)
@@ -45,7 +45,7 @@ export default function ListingsMap({ listings, center }: ListingsMapProps) {
     )
   }
 
-  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY) {
+  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
     return (
       <div className="w-full h-[500px] bg-muted rounded-xl flex items-center justify-center text-center px-6">
         <div>

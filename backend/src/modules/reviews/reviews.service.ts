@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { sanitizeText } from '../../lib/sanitize'
 
 export class ReviewsService {
   constructor(private prisma: PrismaClient) {}
@@ -14,7 +15,7 @@ export class ReviewsService {
     if (existing) throw new Error('Review already submitted for this order')
 
     const review = await this.prisma.review.create({
-      data: { userId, ...data },
+      data: { userId, ...data, comment: sanitizeText(data.comment) },
     })
 
     // Update listing average rating

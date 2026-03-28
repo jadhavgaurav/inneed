@@ -40,6 +40,15 @@ export default async function disputesRoutes(app: FastifyInstance) {
     return reply.code(201).send(await svc.addEvidence(id, req.user!.userId, body))
   })
 
+  // GET /vendor/disputes — disputes filed against the logged-in vendor
+  app.get('/vendor/disputes', { preHandler: requireAuth }, async (req, reply) => {
+    const query = z.object({
+      page: z.coerce.number().int().min(1).default(1),
+      limit: z.coerce.number().int().min(1).max(50).default(20),
+    }).parse(req.query)
+    return reply.send(await svc.getVendorDisputes(req.user!.userId, query.page, query.limit))
+  })
+
   // GET /admin/disputes
   app.get('/admin/disputes', { preHandler: requireAdmin }, async (req, reply) => {
     const query = z.object({

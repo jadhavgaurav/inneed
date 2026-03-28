@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -55,13 +55,14 @@ async function main() {
   }
   console.log('  ✓ Categories created:', Object.keys(categories).length)
 
-  // Vendors
+  // Vendors — UserRole enum only has CUSTOMER and ADMIN.
+  // Vendors are CUSTOMER users with isVendorApproved=true + a VendorProfile.
   const vendorData = [
-    { name: 'Rahul Sharma', email: 'rahul@example.com', business: 'Rahul Camera Rentals', city: 'Mumbai', lat: 19.076, lng: 72.877 },
-    { name: 'Priya Patel', email: 'priya@example.com', business: 'Priya Electronics', city: 'Bangalore', lat: 12.972, lng: 77.594 },
-    { name: 'Amit Singh', email: 'amit@example.com', business: 'Amit Tools Hub', city: 'Delhi', lat: 28.614, lng: 77.209 },
-    { name: 'Sneha Iyer', email: 'sneha@example.com', business: 'Sneha Furniture Rentals', city: 'Chennai', lat: 13.083, lng: 80.271 },
-    { name: 'Vikram Gupta', email: 'vikram@example.com', business: 'Vikram Sports World', city: 'Hyderabad', lat: 17.386, lng: 78.486 },
+    { name: 'Rahul Sharma', email: 'rahul@example.com', phone: '9876543210', business: 'Rahul Camera Rentals', businessType: 'Individual', city: 'Mumbai', state: 'Maharashtra', lat: 19.076, lng: 72.877 },
+    { name: 'Priya Patel', email: 'priya@example.com', phone: '9876543211', business: 'Priya Electronics', businessType: 'Individual', city: 'Bangalore', state: 'Karnataka', lat: 12.972, lng: 77.594 },
+    { name: 'Amit Singh', email: 'amit@example.com', phone: '9876543212', business: 'Amit Tools Hub', businessType: 'Sole Proprietorship', city: 'Delhi', state: 'Delhi', lat: 28.614, lng: 77.209 },
+    { name: 'Sneha Iyer', email: 'sneha@example.com', phone: '9876543213', business: 'Sneha Furniture Rentals', businessType: 'Individual', city: 'Chennai', state: 'Tamil Nadu', lat: 13.083, lng: 80.271 },
+    { name: 'Vikram Gupta', email: 'vikram@example.com', phone: '9876543214', business: 'Vikram Sports World', businessType: 'Sole Proprietorship', city: 'Hyderabad', state: 'Telangana', lat: 17.386, lng: 78.486 },
   ]
 
   const vendorHash = await bcrypt.hash('vendor123', 10)
@@ -75,7 +76,7 @@ async function main() {
         email: v.email,
         name: v.name,
         passwordHash: vendorHash,
-        role: 'VENDOR',
+        role: 'CUSTOMER',
         isVendorApproved: true,
       },
     })
@@ -86,20 +87,30 @@ async function main() {
       create: {
         userId: user.id,
         businessName: v.business,
+        businessType: v.businessType,
+        phone: v.phone,
         status: 'APPROVED',
         approvedAt: new Date(),
         approvedBy: admin.id,
         location: {
           create: {
-            addressLine1: `${v.city} Main Street`,
+            address: `${v.city} Main Street`,
             city: v.city,
-            state: 'IN',
+            state: v.state,
             pincode: '400001',
             latitude: v.lat,
             longitude: v.lng,
           },
         },
-        metrics: { create: { totalListings: 0, totalRentals: 0, rating: 0 } },
+        metrics: {
+          create: {
+            totalListings: 0,
+            totalOrders: 0,
+            averageRating: 0,
+            totalReviews: 0,
+            totalEarnings: 0,
+          },
+        },
       },
     })
 
@@ -107,7 +118,7 @@ async function main() {
   }
   console.log('  ✓ Vendors created:', vendorIds.length)
 
-  // Listings
+  // Listings — Listing model has no slug field, use create (not upsert)
   const listingData = [
     { title: 'Sony Alpha A7 III Camera', desc: 'Full-frame mirrorless camera. Excellent for portraits and events.', cat: 'cameras', vendor: 0, dailyRate: 1500, deposit: 15000, condition: 'LIKE_NEW' },
     { title: 'Canon EOS 5D Mark IV', desc: 'Professional DSLR with 30.4MP sensor. Perfect for weddings and commercial shoots.', cat: 'cameras', vendor: 0, dailyRate: 1200, deposit: 12000, condition: 'GOOD' },
@@ -130,17 +141,18 @@ async function main() {
     const vendorProfile = await prisma.vendorProfile.findUnique({ where: { userId: vendorIds[item.vendor] } })
     if (!vendorProfile) continue
 
-    const slug = item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now()
+    // Skip if listing already exists for this vendor with same title
+    const existing = await prisma.listing.findFirst({
+      where: { vendorId: vendorIds[item.vendor], title: item.title },
+    })
+    if (existing) continue
 
-    await prisma.listing.upsert({
-      where: { slug },
-      update: {},
-      create: {
+    await prisma.listing.create({
+      data: {
         vendorId: vendorIds[item.vendor],
         categoryId: categories[item.cat],
         title: item.title,
         description: item.desc,
-        slug,
         condition: item.condition as any,
         availableForRent: true,
         availableForSale: false,

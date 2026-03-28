@@ -33,7 +33,7 @@ export default async function vendorRoutes(app: FastifyInstance) {
       mimeType: z.string(),
     }).parse(req.body)
 
-    const result = await svc.getPresignedUrl(req.user!.userId, body.fileType, body.mimeType)
+    const result = await svc.getUploadSignature(req.user!.userId, body.fileType)
     return reply.send(result)
   })
 
