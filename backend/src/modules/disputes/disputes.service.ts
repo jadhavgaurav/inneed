@@ -1,7 +1,8 @@
 import { PrismaClient, Prisma } from '@prisma/client'
+import { sanitizeText } from '../../lib/sanitize'
+
 type DisputeStatus = 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED' | 'CLOSED'
 type DisputeType = 'ITEM_NOT_AS_DESCRIBED' | 'DAMAGED_ITEM' | 'MISSING_PARTS' | 'LATE_RETURN' | 'RETURN_DAMAGE' | 'PAYMENT_ISSUE' | 'OTHER'
-import { sanitizeText } from '../../lib/sanitize'
 
 function generateDisputeNumber() {
   return `DSP-${Date.now().toString(36).toUpperCase()}`
@@ -32,7 +33,7 @@ export class DisputesService {
           againstVendorId: data.againstVendorId,
           type: data.type,
           description: sanitizeText(data.description),
-          status: DisputeStatus.OPEN,
+          status: 'OPEN',
         },
       })
 
@@ -79,7 +80,7 @@ export class DisputesService {
   }) {
     const dispute = await this.prisma.dispute.findUnique({ where: { id: disputeId } })
     if (!dispute) throw Object.assign(new Error('Dispute not found'), { statusCode: 404 })
-    if (dispute.status === DisputeStatus.RESOLVED || dispute.status === DisputeStatus.CLOSED) {
+    if (dispute.status === 'RESOLVED' || dispute.status === 'CLOSED') {
       throw Object.assign(new Error('Dispute is already closed'), { statusCode: 400 })
     }
     if (dispute.filedBy !== userId && dispute.againstVendorId !== userId) {
@@ -135,7 +136,7 @@ export class DisputesService {
   }) {
     const dispute = await this.prisma.dispute.findUnique({ where: { id } })
     if (!dispute) throw Object.assign(new Error('Dispute not found'), { statusCode: 404 })
-    if (dispute.status === DisputeStatus.RESOLVED || dispute.status === DisputeStatus.CLOSED) {
+    if (dispute.status === 'RESOLVED' || dispute.status === 'CLOSED') {
       throw Object.assign(new Error('Dispute already resolved'), { statusCode: 400 })
     }
 
@@ -143,7 +144,7 @@ export class DisputesService {
       const updated = await tx.dispute.update({
         where: { id },
         data: {
-          status: DisputeStatus.RESOLVED,
+          status: 'RESOLVED',
           resolution: sanitizeText(data.resolution),
           resolvedBy: adminUserId,
           resolvedAt: new Date(),
