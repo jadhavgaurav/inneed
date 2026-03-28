@@ -38,6 +38,7 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: ['@inneed/shared'],
   async rewrites() {
+    if (!process.env.BACKEND_URL) return []
     return [
       {
         source: '/api/:path*',
