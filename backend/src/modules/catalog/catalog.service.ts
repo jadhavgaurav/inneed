@@ -156,7 +156,7 @@ export class CatalogService {
     }
 
     // Build WHERE clause
-    const where: Prisma.ListingWhereInput = {
+    const where: any = {
       status: 'ACTIVE',
     }
 
