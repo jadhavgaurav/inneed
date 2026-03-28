@@ -30,7 +30,7 @@ export class CheckoutService {
     let subtotal = 0
     let depositTotal = 0
 
-    const lineItems = cart.items.map((item) => {
+    const lineItems = cart.items.map((item: any) => {
       const pricing = item.listing.pricing
       if (!pricing) throw new Error(`No pricing for listing ${item.listing.title}`)
 
@@ -86,7 +86,7 @@ export class CheckoutService {
         pickupAddress,
         notes,
         lines: {
-          create: quote.lineItems.map((line) => ({
+          create: quote.lineItems.map((line: any) => ({
             listingId: line.listingId,
             vendorId: line.vendorId,
             mode: line.mode,
