@@ -191,7 +191,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Trust Badges ── */}
-      <section className="border-b border-border bg-white">
+      <section className="border-b border-border bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex sm:grid sm:grid-cols-4 gap-3 overflow-x-auto sm:overflow-visible" style={{ scrollbarWidth: 'none' }}>
             {TRUST_BADGES.map(({ icon: Icon, label, desc }) => (
@@ -259,7 +259,7 @@ export default async function HomePage() {
 
       {/* ── Featured Items ── */}
       {featured.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 pb-12">
+        <section className="max-w-7xl mx-auto px-4 pb-12 overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold">Featured Items</h2>
@@ -342,7 +342,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Testimonials (like Amazon/Flipkart reviews) ── */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
+      <section className="max-w-7xl mx-auto px-4 py-12 overflow-hidden">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold">What Our Users Say</h2>
           <p className="text-sm text-muted-foreground mt-1">Join thousands of happy renters and vendors</p>
