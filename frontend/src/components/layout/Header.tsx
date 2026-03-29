@@ -73,23 +73,14 @@ export default function Header() {
           <span className="text-xl font-bold text-primary tracking-tight hidden sm:inline">INNEED</span>
         </Link>
 
-        {/* Mobile: tappable search bar (like Amazon) */}
-        <Link
-          href="/search"
-          className="sm:hidden flex-1 flex items-center gap-2 bg-muted/40 border border-border rounded-full px-3 py-2 min-h-[40px]"
-        >
-          <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <span className="text-sm text-muted-foreground truncate">Search items to rent...</span>
-        </Link>
-
-        {/* Desktop: search bar */}
-        <form action="/search" className="flex-1 max-w-2xl hidden sm:flex">
+        {/* Search bar — works on both mobile and desktop */}
+        <form action="/search" className="flex-1 max-w-2xl">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               name="q"
               placeholder="Search items to rent…"
-              className="w-full pl-9 pr-4 py-2.5 border border-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-muted/40 hover:bg-white transition-colors"
+              className="w-full pl-9 pr-4 py-2 sm:py-2.5 border border-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-muted/40 hover:bg-white transition-colors min-h-[40px]"
             />
           </div>
         </form>
@@ -181,16 +172,17 @@ export default function Header() {
               </div>
             </>
           ) : (
-            <>
+            /* Desktop only — mobile uses bottom nav Account tab */
+            <div className="hidden sm:flex items-center gap-1">
               <Link
                 href="/login"
-                className="hidden sm:block text-sm font-medium text-foreground hover:text-primary px-3 py-2 rounded-lg hover:bg-accent transition-colors"
+                className="text-sm font-medium text-foreground hover:text-primary px-3 py-2 rounded-lg hover:bg-accent transition-colors"
               >
                 Sign in
               </Link>
               <Link
                 href="/signup"
-                className="bg-primary text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+                className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
               >
                 Sign up
               </Link>
@@ -200,7 +192,7 @@ export default function Header() {
               >
                 List Your Item
               </Link>
-            </>
+            </div>
           )}
         </nav>
       </div>

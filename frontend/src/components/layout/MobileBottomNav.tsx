@@ -26,7 +26,7 @@ export default function MobileBottomNav() {
     {
       href: isAuthenticated ? '/profile' : '/login',
       icon: User,
-      label: isAuthenticated ? 'Account' : 'Sign in',
+      label: 'Account',
       match: (p: string) => p === '/profile' || p === '/login' || p === '/signup',
     },
   ]

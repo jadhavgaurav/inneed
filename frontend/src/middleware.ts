@@ -19,6 +19,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  // Redirect logged-in users away from auth pages
+  const authRoutes = ['/login', '/signup']
+  if (accessToken && authRoutes.includes(pathname)) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
   return NextResponse.next()
 }
 
