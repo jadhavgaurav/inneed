@@ -74,7 +74,7 @@ export default function Header() {
         </Link>
 
         {/* Search bar — works on both mobile and desktop */}
-        <form action="/search" className="flex-1 max-w-2xl">
+        <form action="/search" className="flex-1 mx-2 sm:mx-4">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
