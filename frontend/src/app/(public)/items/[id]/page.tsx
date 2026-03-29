@@ -16,6 +16,7 @@ import {
 import { api } from '@/lib/api'
 import { formatINR, formatDate } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import { ShareSheet } from '@/components/ui/share-sheet'
 import { toast } from 'sonner'
 
 export default function ItemDetailPage() {
@@ -28,6 +29,7 @@ export default function ItemDetailPage() {
   const [endDate, setEndDate] = useState('')
   const [mode, setMode] = useState<'RENT' | 'BUY' | null>(null)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   // Mobile swipeable carousel
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true })
@@ -77,18 +79,6 @@ export default function ItemDetailPage() {
     if (listing.availableForRent) setMode('RENT')
     else if (listing.availableForSale) setMode('BUY')
   }, [listing, mode])
-
-  const handleShare = async () => {
-    const url = window.location.href
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: listing?.title, url })
-      } catch { /* user cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(url)
-      toast.success('Link copied to clipboard!')
-    }
-  }
 
   // Compute rental days & costs
   const rentalDays = useMemo(() => {
@@ -473,12 +463,19 @@ export default function ItemDetailPage() {
                 </button>
               )}
               <button
-                onClick={handleShare}
+                onClick={() => setShareOpen(true)}
                 className="px-4 py-3 rounded-xl border border-border hover:bg-accent transition-colors"
                 title="Share this item"
               >
                 <Share2 className="h-5 w-5 text-muted-foreground" />
               </button>
+              <ShareSheet
+                open={shareOpen}
+                onOpenChange={setShareOpen}
+                url={typeof window !== 'undefined' ? window.location.href : `https://inneed.online/items/${id}`}
+                title={listing?.title || 'Check out this item on INNEED'}
+                text={listing?.description?.slice(0, 120)}
+              />
             </div>
           </div>
 
