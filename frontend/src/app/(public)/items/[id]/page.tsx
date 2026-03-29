@@ -3,8 +3,10 @@
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import useEmblaCarousel from 'embla-carousel-react'
+import { motion } from 'motion/react'
 import {
   ShoppingCart, Star, MapPin, Shield, Heart, Share2, Clock,
   ArrowRight, CheckCircle2, CreditCard, Zap, Package,
@@ -26,6 +28,19 @@ export default function ItemDetailPage() {
   const [endDate, setEndDate] = useState('')
   const [mode, setMode] = useState<'RENT' | 'BUY' | null>(null)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
+
+  // Mobile swipeable carousel
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true })
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return
+    setCurrentSlide(emblaApi.selectedScrollSnap())
+  }, [emblaApi])
+  useEffect(() => {
+    if (!emblaApi) return
+    emblaApi.on('select', onSelect)
+    return () => { emblaApi.off('select', onSelect) }
+  }, [emblaApi, onSelect])
 
   const { data: listing, isLoading } = useQuery({
     queryKey: ['listing', id],
@@ -169,9 +184,9 @@ export default function ItemDetailPage() {
   const datesSelected = mode === 'RENT' ? !!(startDate && endDate && rentalDays > 0) : true
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <nav className="text-sm text-muted-foreground mb-6 flex items-center gap-1">
+    <div className="max-w-6xl mx-auto px-4 py-4 sm:py-8 pb-36 sm:pb-8">
+      {/* Breadcrumb — hidden on mobile */}
+      <nav className="text-sm text-muted-foreground mb-6 items-center gap-1 hidden sm:flex">
         <Link href="/" className="hover:text-primary transition-colors">Home</Link>
         <ChevronRight className="h-3 w-3" />
         <Link href={`/search?category=${category?.slug}`} className="hover:text-primary transition-colors">{category?.name}</Link>
@@ -179,33 +194,64 @@ export default function ItemDetailPage() {
         <span className="text-foreground font-medium truncate max-w-[200px]">{listing.title}</span>
       </nav>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
         {/* ── Left: Images ── */}
         <div>
-          <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-accent relative group">
-            {media?.[selectedImage]?.url ? (
-              <Image src={media[selectedImage].url} alt={listing.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" priority />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground">No image available</div>
+          {/* Mobile: Swipeable carousel */}
+          <div className="sm:hidden -mx-4">
+            <div className="overflow-hidden" ref={emblaRef}>
+              <div className="flex">
+                {(media?.length > 0 ? media : [{ id: 'placeholder', url: '' }]).map((img: any, i: number) => (
+                  <div key={img.id} className="flex-[0_0_100%] min-w-0 aspect-[4/3] relative bg-accent">
+                    {img.url ? (
+                      <Image src={img.url} alt={listing.title} fill className="object-cover" sizes="100vw" priority={i === 0} />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">No image</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Dot indicators */}
+            {media?.length > 1 && (
+              <div className="flex justify-center gap-1.5 mt-3">
+                {media.map((_: any, i: number) => (
+                  <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === currentSlide ? 'bg-primary w-4' : 'bg-border'}`} />
+                ))}
+              </div>
             )}
-            {/* Condition badge on image */}
-            <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-xs font-semibold px-2.5 py-1 rounded-full">
+            {/* Condition badge overlay */}
+            <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-xs font-semibold px-2.5 py-1 rounded-full z-10 pointer-events-none" style={{ position: 'absolute' }}>
               {listing.condition.replace('_', ' ')}
             </span>
           </div>
-          {media?.length > 1 && (
-            <div className="flex gap-2 mt-3 overflow-x-auto">
-              {media.map((img: any, i: number) => (
-                <button
-                  key={img.id}
-                  onClick={() => setSelectedImage(i)}
-                  className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${i === selectedImage ? 'border-primary' : 'border-transparent hover:border-primary/30'}`}
-                >
-                  <Image src={img.url} alt="" width={64} height={64} className="object-cover w-full h-full" />
-                </button>
-              ))}
+
+          {/* Desktop: Click-to-select gallery */}
+          <div className="hidden sm:block">
+            <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-accent relative group">
+              {media?.[selectedImage]?.url ? (
+                <Image src={media[selectedImage].url} alt={listing.title} fill className="object-cover" sizes="50vw" priority />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">No image available</div>
+              )}
+              <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-xs font-semibold px-2.5 py-1 rounded-full">
+                {listing.condition.replace('_', ' ')}
+              </span>
             </div>
-          )}
+            {media?.length > 1 && (
+              <div className="flex gap-2 mt-3 overflow-x-auto">
+                {media.map((img: any, i: number) => (
+                  <button
+                    key={img.id}
+                    onClick={() => setSelectedImage(i)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${i === selectedImage ? 'border-primary' : 'border-transparent hover:border-primary/30'}`}
+                  >
+                    <Image src={img.url} alt="" width={64} height={64} className="object-cover w-full h-full" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Description - shown below image on desktop */}
           <div className="mt-8 hidden md:block">
@@ -597,6 +643,46 @@ export default function ItemDetailPage() {
           </div>
         </div>
       )}
+
+      {/* ── Sticky Mobile CTA Bar ── */}
+      <motion.div
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="fixed bottom-14 left-0 right-0 z-40 bg-white border-t border-border px-4 py-3 sm:hidden pb-safe"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex-1 min-w-0">
+            {mode === 'RENT' && pricing?.rentPriceDaily && (
+              <p className="text-lg font-bold text-primary">
+                {formatINR(pricing.rentPriceDaily)}
+                <span className="text-xs text-muted-foreground font-normal">/day</span>
+              </p>
+            )}
+            {mode === 'BUY' && pricing?.buyPrice && (
+              <p className="text-lg font-bold text-green-700">{formatINR(pricing.buyPrice)}</p>
+            )}
+            {costBreakdown && mode === 'RENT' && (
+              <p className="text-xs text-muted-foreground">Total: {formatINR(costBreakdown.total)}</p>
+            )}
+          </div>
+          <button
+            onClick={() => addToCart(true)}
+            disabled={!datesSelected || isAddingToCart}
+            className={`px-6 py-3 rounded-xl font-semibold text-white min-h-[48px] transition-opacity hover:opacity-90 disabled:opacity-50 ${
+              mode === 'BUY' ? 'bg-green-600' : 'bg-primary'
+            }`}
+          >
+            {isAddingToCart ? (
+              <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : mode === 'RENT' ? (
+              datesSelected ? 'Rent Now' : 'Select Dates'
+            ) : (
+              'Buy Now'
+            )}
+          </button>
+        </div>
+      </motion.div>
     </div>
   )
 }

@@ -141,7 +141,7 @@ export default async function HomePage() {
     <div>
 
       {/* ── Hero ── */}
-      <section className="relative bg-gradient-to-br from-primary/12 via-primary/6 to-secondary overflow-hidden py-16 sm:py-20 px-4">
+      <section className="relative bg-gradient-to-br from-primary/12 via-primary/6 to-secondary overflow-hidden py-10 sm:py-20 px-4">
         {/* Decorative blobs */}
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-16 -left-16 w-72 h-72 bg-primary/8 rounded-full blur-3xl pointer-events-none" />
@@ -153,11 +153,11 @@ export default async function HomePage() {
             India&apos;s #1 P2P Rental Marketplace
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 tracking-tight text-foreground leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold mb-4 tracking-tight text-foreground leading-tight">
             Rent Anything<br className="hidden sm:block" /> Near You
           </h1>
 
-          <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+          <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto">
             Save money, reduce waste, and earn from items you own.
             Trusted by thousands across India.
           </p>
@@ -193,9 +193,9 @@ export default async function HomePage() {
       {/* ── Trust Badges ── */}
       <section className="border-b border-border bg-white">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="flex sm:grid sm:grid-cols-4 gap-3 overflow-x-auto sm:overflow-visible" style={{ scrollbarWidth: 'none' }}>
             {TRUST_BADGES.map(({ icon: Icon, label, desc }) => (
-              <div key={label} className="flex items-center gap-3 py-1">
+              <div key={label} className="flex items-center gap-3 py-1 flex-shrink-0 min-w-[200px] sm:min-w-0">
                 <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Icon className="h-4.5 w-4.5 text-primary" style={{ width: '18px', height: '18px' }} />
                 </div>
@@ -238,15 +238,15 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
           {CATEGORIES.map(({ icon: Icon, name, slug, bg, iconColor, desc }) => (
             <Link
               key={slug}
               href={`/search?categorySlug=${slug}`}
-              className="group flex flex-col items-center gap-3 p-4 rounded-2xl border border-border bg-white hover:border-primary/30 hover:shadow-md transition-all duration-200 cursor-pointer text-center"
+              className="group flex flex-col items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl border border-border bg-white hover:border-primary/30 hover:shadow-md transition-all duration-200 cursor-pointer text-center"
             >
-              <div className={`w-14 h-14 ${bg} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
-                <Icon className={`h-7 w-7 ${iconColor}`} />
+              <div className={`w-10 h-10 sm:w-14 sm:h-14 ${bg} rounded-xl sm:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
+                <Icon className={`h-5 w-5 sm:h-7 sm:w-7 ${iconColor}`} />
               </div>
               <div>
                 <p className="text-sm font-semibold leading-tight">{name}</p>
@@ -269,9 +269,11 @@ export default async function HomePage() {
               View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="flex sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-4 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0" style={{ scrollbarWidth: 'none' }}>
             {featured.map((listing: any) => (
-              <ListingCard key={listing.id} listing={listing} />
+              <div key={listing.id} className="flex-shrink-0 w-[160px] sm:w-auto">
+                <ListingCard listing={listing} />
+              </div>
             ))}
           </div>
         </section>
@@ -345,9 +347,9 @@ export default async function HomePage() {
           <h2 className="text-2xl font-bold">What Our Users Say</h2>
           <p className="text-sm text-muted-foreground mt-1">Join thousands of happy renters and vendors</p>
         </div>
-        <div className="grid sm:grid-cols-3 gap-6">
+        <div className="flex sm:grid sm:grid-cols-3 gap-4 sm:gap-6 overflow-x-auto sm:overflow-visible -mx-4 px-4 sm:mx-0 sm:px-0" style={{ scrollbarWidth: 'none' }}>
           {TESTIMONIALS.map((t) => (
-            <div key={t.name} className="bg-white border border-border rounded-2xl p-6 hover:shadow-md transition-shadow">
+            <div key={t.name} className="bg-white border border-border rounded-2xl p-5 sm:p-6 hover:shadow-md transition-shadow flex-shrink-0 w-[280px] sm:w-auto">
               <div className="flex items-center gap-1 mb-3">
                 {Array.from({ length: t.rating }).map((_, i) => (
                   <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />

@@ -8,6 +8,10 @@ import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
+export const viewport = {
+  viewportFit: 'cover' as const,
+}
+
 export const metadata: Metadata = {
   title: {
     default: 'INNEED — Rent Anything Near You',
@@ -32,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <QueryProvider>
             <AuthProvider>
               {children}
-              <Toaster richColors position="top-right" />
+              <Toaster richColors position="top-center" />
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

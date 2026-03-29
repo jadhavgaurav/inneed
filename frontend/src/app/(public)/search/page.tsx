@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { SlidersHorizontal, LayoutGrid, Map, X, SearchX, ArrowRight, Star, Repeat, ShoppingBag } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatINR } from '@/lib/utils'
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer'
 
 const ListingsMap = lazy(() => import('@/components/maps/ListingsMap'))
 
@@ -41,6 +42,7 @@ function SearchPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [showFilters, setShowFilters] = useState(false)
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
 
   const q = searchParams.get('q') || ''
@@ -119,11 +121,15 @@ function SearchPageContent() {
         {/* Divider */}
         <div className="w-px h-5 bg-border flex-shrink-0 mx-1" />
 
-        {/* Filters button — pinned to the right of the pill row */}
+        {/* Filters button — mobile: opens drawer, desktop: toggles sidebar */}
         <button
           type="button"
-          onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors flex-shrink-0 ml-auto ${
+          onClick={() => {
+            // On mobile open drawer, on desktop toggle sidebar
+            if (window.innerWidth < 640) setMobileFiltersOpen(true)
+            else setShowFilters(!showFilters)
+          }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors flex-shrink-0 ml-auto min-h-[36px] ${
             showFilters || activeFilterCount > 0
               ? 'border-primary text-primary bg-primary/5'
               : 'border-border hover:bg-accent'
@@ -141,9 +147,9 @@ function SearchPageContent() {
 
       <div className="flex gap-6">
 
-        {/* ── Filters Sidebar ── */}
+        {/* ── Filters Sidebar (desktop only) ── */}
         {showFilters && (
-          <aside className="w-60 flex-shrink-0">
+          <aside className="w-60 flex-shrink-0 hidden sm:block">
             <div className="bg-white border border-border rounded-xl p-4 space-y-5 sticky top-36">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-sm">Filters</h3>
@@ -417,6 +423,98 @@ function SearchPageContent() {
           )}
         </div>
       </div>
+
+      {/* ── Mobile Filter Drawer ── */}
+      <Drawer open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <div className="flex items-center justify-between">
+              <DrawerTitle>Filters</DrawerTitle>
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={clearAllFilters}
+                  className="text-xs text-destructive hover:underline flex items-center gap-1"
+                >
+                  <X className="h-3 w-3" /> Clear all
+                </button>
+              )}
+            </div>
+          </DrawerHeader>
+
+          <div className="px-4 py-4 overflow-y-auto space-y-6">
+            {/* Mode */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Listing Type</p>
+              <div className="space-y-1">
+                {[
+                  { val: 'RENT', label: 'For Rent' },
+                  { val: 'BUY', label: 'For Sale' },
+                ].map(({ val, label }) => (
+                  <label key={val} className="flex items-center gap-3 cursor-pointer min-h-[44px] px-2 rounded-lg hover:bg-accent transition-colors">
+                    <input
+                      type="radio"
+                      name="mode-m"
+                      checked={mode === val}
+                      onChange={() => setFilter('mode', val === mode ? '' : val)}
+                      className="accent-primary h-4 w-4"
+                    />
+                    <span className="text-sm">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Price Range */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Price (₹/day)</p>
+              <div className="flex gap-3">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  defaultValue={priceMin}
+                  onBlur={(e) => setFilter('priceMin', e.target.value)}
+                  className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
+                />
+                <input
+                  type="number"
+                  placeholder="Max"
+                  defaultValue={priceMax}
+                  onBlur={(e) => setFilter('priceMax', e.target.value)}
+                  className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
+                />
+              </div>
+            </div>
+
+            {/* Condition */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Condition</p>
+              <div className="space-y-1">
+                {CONDITIONS.map(c => (
+                  <label key={c} className="flex items-center gap-3 cursor-pointer min-h-[44px] px-2 rounded-lg hover:bg-accent transition-colors">
+                    <input
+                      type="radio"
+                      name="condition-m"
+                      checked={condition === c}
+                      onChange={() => setFilter('condition', c === condition ? '' : c)}
+                      className="accent-primary h-4 w-4"
+                    />
+                    <span className="text-sm">{CONDITIONS_LABEL[c]}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DrawerFooter>
+            <button
+              onClick={() => setMobileFiltersOpen(false)}
+              className="w-full bg-primary text-white py-3 rounded-xl font-semibold text-sm min-h-[48px]"
+            >
+              Show {data?.total || 0} results
+            </button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }

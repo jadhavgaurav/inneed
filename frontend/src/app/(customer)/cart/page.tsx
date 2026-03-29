@@ -47,8 +47,8 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Shopping Cart</h1>
+    <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8 pb-36 lg:pb-8">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Shopping Cart</h1>
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
@@ -89,8 +89,8 @@ export default function CartPage() {
           ))}
         </div>
 
-        {/* Order summary */}
-        <div>
+        {/* Order summary — desktop sidebar */}
+        <div className="hidden lg:block">
           <div className="bg-white border border-border rounded-xl p-6 sticky top-24">
             <h2 className="font-semibold mb-4">Order Summary</h2>
             {quote ? (
@@ -117,6 +117,22 @@ export default function CartPage() {
               Continue Shopping
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile sticky checkout bar */}
+      <div className="fixed bottom-14 left-0 right-0 z-40 bg-white border-t border-border px-4 py-3 lg:hidden pb-safe">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground">{cart.items.length} item{cart.items.length !== 1 ? 's' : ''}</p>
+            <p className="text-lg font-bold">{quote ? formatINR(quote.total) : '...'}</p>
+          </div>
+          <Link
+            href="/checkout"
+            className="bg-primary text-white px-6 py-3 rounded-xl font-semibold min-h-[48px] flex items-center"
+          >
+            Checkout
+          </Link>
         </div>
       </div>
     </div>

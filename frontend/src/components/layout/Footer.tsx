@@ -3,9 +3,28 @@ import { Package, Mail, Phone, MapPin } from 'lucide-react'
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border bg-white">
+    <footer className="border-t border-border bg-white mb-16 sm:mb-0">
       <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
+
+        {/* Mobile minimal footer */}
+        <div className="sm:hidden text-center py-2 space-y-4">
+          <div className="flex items-center justify-center gap-1.5">
+            <div className="w-5 h-5 bg-primary rounded-md flex items-center justify-center">
+              <Package className="h-3 w-3 text-white" />
+            </div>
+            <p className="font-bold text-primary text-sm">INNEED</p>
+          </div>
+          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+            <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
+            <Link href="/contact" className="hover:text-foreground transition-colors">Contact</Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+          </div>
+          <p className="text-xs text-muted-foreground">&copy; 2026 INNEED Technologies Pvt. Ltd.</p>
+        </div>
+
+        {/* Desktop full footer */}
+        <div className="hidden sm:grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-1.5 mb-3">
@@ -80,12 +99,12 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Payment methods + Bottom bar */}
-        <div className="border-t border-border pt-6">
+        {/* Payment methods + Bottom bar (desktop only) */}
+        <div className="hidden sm:block border-t border-border pt-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <p className="text-xs text-muted-foreground">
-                © 2026 INNEED Technologies Pvt. Ltd. All rights reserved.
+                &copy; 2026 INNEED Technologies Pvt. Ltd. All rights reserved.
               </p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="bg-accent px-2 py-0.5 rounded text-[10px] font-medium">UPI</span>

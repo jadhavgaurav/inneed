@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import {
-  ShoppingCart, Bell, User, LogOut, Search, Menu, X,
+  ShoppingCart, Bell, User, LogOut, Search, X,
   Camera, Bike, Wrench, Sofa, Laptop, Music, ChevronRight, Package,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -27,7 +27,6 @@ export default function Header() {
   const pathname = usePathname()
 
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
   const { data: notifData } = useQuery({
@@ -49,9 +48,8 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  // Close mobile menu on route change
+  // Close menu on route change
   useEffect(() => {
-    setMobileMenuOpen(false)
     setUserMenuOpen(false)
   }, [pathname])
 
@@ -65,17 +63,26 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white border-b border-border shadow-sm">
 
       {/* ── Row 1: Logo | Search | Actions ── */}
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-3">
+      <div className="max-w-7xl mx-auto px-4 h-14 sm:h-16 flex items-center gap-2 sm:gap-3">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-1.5 flex-shrink-0 mr-2">
+        <Link href="/" className="flex items-center gap-1.5 flex-shrink-0">
           <div className="w-7 h-7 bg-primary rounded-md flex items-center justify-center">
             <Package className="h-4 w-4 text-white" />
           </div>
-          <span className="text-xl font-bold text-primary tracking-tight">INNEED</span>
+          <span className="text-xl font-bold text-primary tracking-tight hidden sm:inline">INNEED</span>
         </Link>
 
-        {/* Search bar — always visible on desktop */}
+        {/* Mobile: tappable search bar (like Amazon) */}
+        <Link
+          href="/search"
+          className="sm:hidden flex-1 flex items-center gap-2 bg-muted/40 border border-border rounded-full px-3 py-2 min-h-[40px]"
+        >
+          <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <span className="text-sm text-muted-foreground truncate">Search items to rent...</span>
+        </Link>
+
+        {/* Desktop: search bar */}
         <form action="/search" className="flex-1 max-w-2xl hidden sm:flex">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -88,22 +95,13 @@ export default function Header() {
         </form>
 
         {/* Actions */}
-        <nav className="flex items-center gap-1">
-
-          {/* Mobile search icon */}
-          <Link
-            href="/search"
-            className="sm:hidden p-2 hover:bg-accent rounded-lg text-muted-foreground"
-            aria-label="Search"
-          >
-            <Search className="h-5 w-5" />
-          </Link>
+        <nav className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
 
           {isAuthenticated ? (
             <>
               <Link
                 href="/cart"
-                className="p-2 hover:bg-accent rounded-lg text-muted-foreground"
+                className="p-2.5 sm:p-2 hover:bg-accent rounded-lg text-muted-foreground hidden sm:flex"
                 aria-label="Cart"
               >
                 <ShoppingCart className="h-5 w-5" />
@@ -111,12 +109,12 @@ export default function Header() {
 
               <Link
                 href="/notifications"
-                className="relative p-2 hover:bg-accent rounded-lg text-muted-foreground"
+                className="relative p-2.5 sm:p-2 hover:bg-accent rounded-lg text-muted-foreground"
                 aria-label="Notifications"
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium leading-none">
+                  <span className="absolute top-0.5 right-0.5 sm:-top-0.5 sm:-right-0.5 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium leading-none">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -139,11 +137,11 @@ export default function Header() {
                 </Link>
               )}
 
-              {/* User menu — click-based (accessible on mobile) */}
+              {/* User menu — click-based */}
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(v => !v)}
-                  className="flex items-center gap-1.5 p-1.5 hover:bg-accent rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 p-2 sm:p-1.5 hover:bg-accent rounded-lg transition-colors"
                   aria-label="User menu"
                   aria-expanded={userMenuOpen}
                 >
@@ -158,22 +156,22 @@ export default function Header() {
                       <p className="text-sm font-semibold truncate">{user?.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                     </div>
-                    <Link href="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-accent transition-colors">
+                    <Link href="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-accent transition-colors">
                       <User className="h-4 w-4 text-muted-foreground" /> Profile
                     </Link>
-                    <Link href="/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-accent transition-colors">
+                    <Link href="/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-accent transition-colors">
                       <Package className="h-4 w-4 text-muted-foreground" /> My Orders
                     </Link>
-                    <Link href="/rentals" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-accent transition-colors">
+                    <Link href="/rentals" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-accent transition-colors">
                       <ShoppingCart className="h-4 w-4 text-muted-foreground" /> My Rentals
                     </Link>
-                    <Link href="/saved" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-accent transition-colors">
+                    <Link href="/saved" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-accent transition-colors">
                       <Bell className="h-4 w-4 text-muted-foreground" /> Saved Items
                     </Link>
                     <div className="border-t border-border mt-1 pt-1">
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-accent transition-colors text-destructive"
+                        className="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-accent transition-colors text-destructive"
                       >
                         <LogOut className="h-4 w-4" /> Sign out
                       </button>
@@ -192,7 +190,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/signup"
-                className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+                className="bg-primary text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
               >
                 Sign up
               </Link>
@@ -204,20 +202,11 @@ export default function Header() {
               </Link>
             </>
           )}
-
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMobileMenuOpen(v => !v)}
-            className="sm:hidden p-2 hover:bg-accent rounded-lg text-muted-foreground ml-1"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
         </nav>
       </div>
 
-      {/* ── Row 2: Category Nav Bar ── */}
-      <div className="border-t border-border/60 bg-white/95">
+      {/* ── Row 2: Category Nav Bar (desktop only) ── */}
+      <div className="border-t border-border/60 bg-white/95 hidden sm:block">
         <div className="max-w-7xl mx-auto px-4">
           <div
             className="flex items-center gap-0.5 overflow-x-auto py-1.5"
@@ -243,58 +232,6 @@ export default function Header() {
           </div>
         </div>
       </div>
-
-      {/* ── Mobile Drawer ── */}
-      {mobileMenuOpen && (
-        <div className="sm:hidden border-t border-border bg-white shadow-lg">
-          {/* Mobile search bar */}
-          <div className="px-4 py-3 border-b border-border">
-            <form action="/search" className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                name="q"
-                placeholder="Search items to rent…"
-                className="w-full pl-9 pr-4 py-2.5 border border-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-muted/40"
-              />
-            </form>
-          </div>
-
-          <div className="px-4 py-3 space-y-0.5">
-            {!isAuthenticated ? (
-              <>
-                <Link href="/login" className="block py-2.5 text-sm font-medium hover:text-primary transition-colors">Sign in</Link>
-                <Link href="/signup" className="block py-2.5 text-sm font-semibold text-primary transition-colors">Sign up</Link>
-                <Link href="/vendor/onboarding" className="block py-2.5 text-sm text-muted-foreground hover:text-primary transition-colors">List Your Item</Link>
-              </>
-            ) : (
-              <>
-                <div className="py-2 border-b border-border mb-2">
-                  <p className="text-sm font-semibold">{user?.name}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
-                </div>
-                <Link href="/profile" className="block py-2.5 text-sm hover:text-primary transition-colors">Profile</Link>
-                <Link href="/orders" className="block py-2.5 text-sm hover:text-primary transition-colors">My Orders</Link>
-                <Link href="/rentals" className="block py-2.5 text-sm hover:text-primary transition-colors">My Rentals</Link>
-                <Link href="/cart" className="block py-2.5 text-sm hover:text-primary transition-colors">Cart</Link>
-                <Link href="/notifications" className="block py-2.5 text-sm hover:text-primary transition-colors">
-                  Notifications {unreadCount > 0 && <span className="ml-1 bg-destructive text-white text-xs rounded-full px-1.5 py-0.5">{unreadCount}</span>}
-                </Link>
-                {user?.isVendorApproved && (
-                  <Link href="/vendor/dashboard" className="block py-2.5 text-sm text-primary font-medium">Vendor Dashboard</Link>
-                )}
-                {user?.role === 'ADMIN' && (
-                  <Link href="/admin" className="block py-2.5 text-sm text-primary font-medium">Admin Panel</Link>
-                )}
-                <div className="border-t border-border pt-2 mt-2">
-                  <button onClick={handleLogout} className="block py-2.5 text-sm text-destructive w-full text-left">
-                    Sign out
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   )
 }

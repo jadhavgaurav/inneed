@@ -114,10 +114,13 @@ export default function NewListingPage() {
         </div>
       </div>
 
-      {/* Progress bar */}
+      {/* Progress bar with labels */}
       <div className="flex gap-1.5 mb-8">
-        {Array.from({ length: totalSteps }).map((_, i) => (
-          <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i < step ? 'bg-primary' : 'bg-muted'}`} />
+        {['Type', 'Details', 'Price', 'Photos'].map((label, i) => (
+          <div key={label} className="flex-1 flex flex-col items-center gap-1">
+            <div className={`w-full h-1.5 rounded-full transition-colors ${i < step ? 'bg-primary' : 'bg-muted'}`} />
+            <span className={`text-[10px] font-medium ${i < step ? 'text-primary' : 'text-muted-foreground'}`}>{label}</span>
+          </div>
         ))}
       </div>
 
