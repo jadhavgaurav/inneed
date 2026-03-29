@@ -3,12 +3,13 @@
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import {
   ShoppingCart, Star, MapPin, Shield, Heart, Share2, Clock,
   ArrowRight, CheckCircle2, CreditCard, Zap, Package,
-  Calendar, Info, ChevronRight, BadgeCheck, MessageCircle
+  Calendar, Info, ChevronRight, BadgeCheck, MessageCircle,
+  Repeat, ShoppingBag
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatINR, formatDate } from '@/lib/utils'
@@ -23,7 +24,7 @@ export default function ItemDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [mode, setMode] = useState<'RENT' | 'BUY'>('RENT')
+  const [mode, setMode] = useState<'RENT' | 'BUY' | null>(null)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
 
   const { data: listing, isLoading } = useQuery({
@@ -54,6 +55,13 @@ export default function ItemDetailPage() {
     enabled: !!listing?.categoryId,
   })
   const relatedItems = (relatedData?.listings || []).filter((l: any) => l.id !== id).slice(0, 4)
+
+  // Auto-set mode based on listing availability
+  useEffect(() => {
+    if (!listing || mode !== null) return
+    if (listing.availableForRent) setMode('RENT')
+    else if (listing.availableForSale) setMode('BUY')
+  }, [listing, mode])
 
   const handleShare = async () => {
     const url = window.location.href
@@ -237,16 +245,50 @@ export default function ItemDetailPage() {
 
           <h1 className="text-2xl font-bold mb-4">{listing.title}</h1>
 
-          {/* Mode selector */}
+          {/* Mode selector — only when both options available */}
           {listing.availableForRent && listing.availableForSale && (
-            <div className="flex gap-2 mb-4">
-              <button onClick={() => setMode('RENT')} className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${mode === 'RENT' ? 'bg-primary text-white border-primary' : 'border-border hover:bg-accent'}`}>For Rent</button>
-              <button onClick={() => setMode('BUY')} className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${mode === 'BUY' ? 'bg-primary text-white border-primary' : 'border-border hover:bg-accent'}`}>Buy</button>
+            <div className="flex rounded-xl border border-border overflow-hidden mb-4">
+              <button
+                onClick={() => setMode('RENT')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold transition-colors ${
+                  mode === 'RENT'
+                    ? 'bg-primary text-white'
+                    : 'bg-white hover:bg-accent text-muted-foreground'
+                }`}
+              >
+                <Repeat className="h-4 w-4" /> Rent
+              </button>
+              <button
+                onClick={() => setMode('BUY')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold transition-colors ${
+                  mode === 'BUY'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-white hover:bg-accent text-muted-foreground'
+                }`}
+              >
+                <ShoppingBag className="h-4 w-4" /> Buy
+              </button>
+            </div>
+          )}
+
+          {/* Single-mode label */}
+          {listing.availableForRent && !listing.availableForSale && (
+            <div className="flex items-center gap-1.5 mb-4">
+              <span className="bg-primary/10 text-primary text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                <Repeat className="h-3 w-3" /> Available for Rent
+              </span>
+            </div>
+          )}
+          {!listing.availableForRent && listing.availableForSale && (
+            <div className="flex items-center gap-1.5 mb-4">
+              <span className="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                <ShoppingBag className="h-3 w-3" /> Available for Sale
+              </span>
             </div>
           )}
 
           {/* ── Pricing Card ── */}
-          <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-5 mb-4">
+          <div className={`border rounded-xl p-5 mb-4 ${mode === 'BUY' ? 'bg-gradient-to-br from-green-50 to-green-100/50 border-green-200' : 'bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20'}`}>
             {mode === 'RENT' && pricing?.rentPriceDaily && (
               <div className="flex gap-6">
                 <div>
@@ -268,9 +310,13 @@ export default function ItemDetailPage() {
               </div>
             )}
             {mode === 'BUY' && pricing?.buyPrice && (
-              <p className="font-bold text-2xl text-primary">{formatINR(pricing.buyPrice)}</p>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">Buy Price</p>
+                <p className="font-bold text-2xl text-green-700">{formatINR(pricing.buyPrice)}</p>
+                <p className="text-sm text-muted-foreground mt-1">One-time purchase — item is yours to keep</p>
+              </div>
             )}
-            {pricing?.securityDeposit > 0 && (
+            {mode === 'RENT' && pricing?.securityDeposit > 0 && (
               <div className="flex items-center gap-1.5 mt-3 text-sm text-muted-foreground">
                 <Shield className="h-4 w-4 text-green-600" />
                 <span>Security deposit: <strong className="text-foreground">{formatINR(pricing.securityDeposit)}</strong> (fully refundable)</span>
@@ -341,16 +387,20 @@ export default function ItemDetailPage() {
             <button
               onClick={() => addToCart(true)}
               disabled={!datesSelected || isAddingToCart}
-              className="w-full bg-primary text-white py-3.5 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base transition-opacity"
+              className={`w-full py-3.5 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base transition-opacity ${
+                mode === 'BUY' ? 'bg-green-600 text-white' : 'bg-primary text-white'
+              }`}
             >
               {isAddingToCart ? (
                 <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : mode === 'BUY' ? (
+                <ShoppingBag className="h-5 w-5" />
               ) : (
                 <Zap className="h-5 w-5" />
               )}
               {mode === 'RENT'
                 ? (datesSelected ? `Rent Now ${costBreakdown ? `· ${formatINR(costBreakdown.total)}` : ''}` : 'Select dates to rent')
-                : 'Buy Now'}
+                : `Buy Now · ${pricing?.buyPrice ? formatINR(pricing.buyPrice) : ''}`}
             </button>
 
             {/* Add to Cart — secondary */}
@@ -358,7 +408,11 @@ export default function ItemDetailPage() {
               <button
                 onClick={() => addToCart(false)}
                 disabled={!datesSelected || isAddingToCart}
-                className="flex-1 border border-primary text-primary py-3 rounded-xl font-medium hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                className={`flex-1 border py-3 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors ${
+                  mode === 'BUY'
+                    ? 'border-green-600 text-green-700 hover:bg-green-50'
+                    : 'border-primary text-primary hover:bg-primary/5'
+                }`}
               >
                 <ShoppingCart className="h-4 w-4" />
                 Add to Cart

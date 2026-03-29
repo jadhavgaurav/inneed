@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Eye, Edit, Pause, Archive } from 'lucide-react'
+import { Plus, Eye, Edit, Pause, Archive, Repeat, ShoppingBag } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { formatINR } from '@/lib/utils'
@@ -62,10 +62,31 @@ export default function VendorListingsPage() {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-medium truncate">{listing.title}</h3>
-              <p className="text-sm text-muted-foreground">{listing.category?.name}</p>
-              {listing.pricing?.rentPriceDaily && (
-                <p className="text-sm font-medium text-primary">{formatINR(listing.pricing.rentPriceDaily)}/day</p>
-              )}
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-sm text-muted-foreground">{listing.category?.name}</span>
+                <span className="text-muted-foreground">·</span>
+                <div className="flex gap-1">
+                  {listing.availableForRent && (
+                    <span className="text-[10px] font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                      <Repeat className="h-2.5 w-2.5" /> Rent
+                    </span>
+                  )}
+                  {listing.availableForSale && (
+                    <span className="text-[10px] font-semibold bg-green-100 text-green-700 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                      <ShoppingBag className="h-2.5 w-2.5" /> Sell
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5">
+                {listing.pricing?.rentPriceDaily && (
+                  <span className="text-sm font-medium text-primary">{formatINR(listing.pricing.rentPriceDaily)}/day</span>
+                )}
+                {listing.pricing?.rentPriceDaily && listing.pricing?.buyPrice && <span className="text-muted-foreground text-xs">·</span>}
+                {listing.pricing?.buyPrice && (
+                  <span className="text-sm font-medium text-green-700">{formatINR(listing.pricing.buyPrice)} buy</span>
+                )}
+              </div>
             </div>
             <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[listing.status] || 'bg-muted text-muted-foreground'}`}>
               {listing.status}

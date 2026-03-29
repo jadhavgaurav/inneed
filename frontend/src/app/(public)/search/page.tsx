@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { SlidersHorizontal, LayoutGrid, Map, X, SearchX, ArrowRight, Star } from 'lucide-react'
+import { SlidersHorizontal, LayoutGrid, Map, X, SearchX, ArrowRight, Star, Repeat, ShoppingBag } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatINR } from '@/lib/utils'
 
@@ -327,7 +327,10 @@ function SearchPageContent() {
           {/* Grid */}
           {!isLoading && (data?.listings?.length ?? 0) > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {data?.listings?.map((listing: any) => (
+              {data?.listings?.map((listing: any) => {
+                const canRent = listing.availableForRent && listing.pricing?.rentPriceDaily
+                const canBuy = listing.availableForSale && listing.pricing?.buyPrice
+                return (
                 <Link key={listing.id} href={`/items/${listing.id}`} className="group">
                   <div className="aspect-[4/3] bg-accent rounded-xl overflow-hidden mb-3 relative">
                     {listing.media?.[0] ? (
@@ -335,6 +338,7 @@ function SearchPageContent() {
                         src={listing.media[0].url || '/placeholder.jpg'}
                         alt={listing.title}
                         fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -342,31 +346,51 @@ function SearchPageContent() {
                         No image
                       </div>
                     )}
+                    {/* Condition badge */}
                     <span className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-xs px-2 py-0.5 rounded-full font-medium">
                       {CONDITIONS_LABEL[listing.condition] || listing.condition}
                     </span>
+                    {/* Rating badge */}
                     {listing.pricing?.averageRating > 0 && (
                       <span className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-xs px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
                         <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                         {listing.pricing.averageRating.toFixed(1)}
                       </span>
                     )}
+                    {/* Rent/Buy badges at bottom of image */}
+                    <div className="absolute bottom-2 left-2 flex gap-1">
+                      {canRent && (
+                        <span className="bg-primary/90 backdrop-blur-sm text-white text-[10px] font-semibold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                          <Repeat className="h-2.5 w-2.5" /> Rent
+                        </span>
+                      )}
+                      {canBuy && (
+                        <span className="bg-green-600/90 backdrop-blur-sm text-white text-[10px] font-semibold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                          <ShoppingBag className="h-2.5 w-2.5" /> Buy
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <h3 className="font-medium text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors">
                     {listing.title}
                   </h3>
-                  {listing.pricing?.rentPriceDaily && (
-                    <p className="text-primary font-semibold text-sm">
-                      {formatINR(listing.pricing.rentPriceDaily)}<span className="text-muted-foreground font-normal">/day</span>
-                    </p>
-                  )}
-                  {listing.pricing?.buyPrice && !listing.pricing?.rentPriceDaily && (
-                    <p className="text-primary font-semibold text-sm">
-                      Buy: {formatINR(listing.pricing.buyPrice)}
-                    </p>
-                  )}
+                  {/* Price display */}
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    {canRent && (
+                      <p className="text-primary font-semibold text-sm">
+                        {formatINR(listing.pricing.rentPriceDaily)}<span className="text-muted-foreground font-normal">/day</span>
+                      </p>
+                    )}
+                    {canRent && canBuy && <span className="text-muted-foreground text-xs">·</span>}
+                    {canBuy && (
+                      <p className="text-green-700 font-semibold text-sm">
+                        {formatINR(listing.pricing.buyPrice)}<span className="text-muted-foreground font-normal text-xs"> buy</span>
+                      </p>
+                    )}
+                  </div>
                 </Link>
-              ))}
+                )
+              })}
             </div>
           )}
 
