@@ -7,7 +7,7 @@ import { requireAuth } from '../../middleware/auth.middleware'
 const COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
+  sameSite: 'lax' as const,
   path: '/',
 }
 
@@ -60,12 +60,9 @@ export default async function authRoutes(app: FastifyInstance) {
   // POST /auth/google
   app.post('/google', async (req, reply) => {
     const body = z.object({
-      googleId: z.string(),
-      email: z.string().email(),
-      name: z.string(),
-      avatar: z.string().optional(),
+      accessToken: z.string().min(1),
     }).parse(req.body)
-    const { accessToken, refreshToken } = await svc.googleAuth(body.googleId, body.email, body.name, body.avatar)
+    const { accessToken, refreshToken } = await svc.googleAuth(body.accessToken)
     reply
       .setCookie('access_token', accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 })
       .setCookie('refresh_token', refreshToken, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 })

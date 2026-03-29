@@ -18,17 +18,9 @@ export function GoogleSignInButton() {
     onSuccess: async (tokenResponse) => {
       setLoading(true)
       try {
-        // Fetch user info from Google using access token
-        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        })
-        const profile = await res.json()
-
+        // Send access token to backend for server-side verification
         await api.post('/auth/google', {
-          googleId: profile.sub,
-          email: profile.email,
-          name: profile.name,
-          avatar: profile.picture,
+          accessToken: tokenResponse.access_token,
         })
 
         await refreshUser()

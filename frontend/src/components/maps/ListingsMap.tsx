@@ -50,7 +50,7 @@ export default function ListingsMap({ listings, center }: ListingsMapProps) {
       <div className="w-full h-[500px] bg-muted rounded-xl flex items-center justify-center text-center px-6">
         <div>
           <p className="font-medium text-muted-foreground">Map unavailable</p>
-          <p className="text-sm text-muted-foreground mt-1">Add NEXT_PUBLIC_GOOGLE_MAPS_KEY to enable map view</p>
+          <p className="text-sm text-muted-foreground mt-1">Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to enable map view</p>
         </div>
       </div>
     )

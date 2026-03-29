@@ -1,7 +1,6 @@
 import { randomInt } from 'crypto'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-import { nanoid } from 'nanoid'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../lib/jwt'
 
 export class AuthService {
@@ -97,11 +96,31 @@ export class AuthService {
 
   // ─── Google OAuth ─────────────────────────────────────────────────────────
 
-  async googleAuth(googleId: string, email: string, name: string, avatar?: string) {
+  async googleAuth(accessToken: string) {
+    // Verify the token with Google and fetch user profile server-side
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+
+    if (!res.ok) {
+      throw Object.assign(new Error('Invalid Google access token'), { statusCode: 401 })
+    }
+
+    const profile = await res.json() as { sub?: string; email?: string; name?: string; picture?: string }
+
+    if (!profile.sub || !profile.email) {
+      throw Object.assign(new Error('Could not retrieve Google profile'), { statusCode: 400 })
+    }
+
     const user = await this.prisma.user.upsert({
-      where: { googleId },
-      update: { lastLoginAt: new Date(), avatar: avatar ?? undefined },
-      create: { googleId, email, name, avatar },
+      where: { googleId: profile.sub },
+      update: { lastLoginAt: new Date(), avatar: profile.picture ?? undefined },
+      create: {
+        googleId: profile.sub,
+        email: profile.email,
+        name: profile.name || profile.email.split('@')[0],
+        avatar: profile.picture,
+      },
     })
 
     return this.createSession(user.id, user.role)
@@ -121,8 +140,9 @@ export class AuthService {
       throw new Error('Invalid or expired refresh token')
     }
 
-    // Rotate refresh token
-    const newRefreshToken = nanoid(64)
+    // Generate new tokens and rotate
+    const accessToken = signAccessToken({ userId: payload.userId, role: session.user.role })
+    const newRefreshToken = signRefreshToken({ userId: payload.userId, role: session.user.role })
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
     await this.prisma.session.update({
@@ -130,16 +150,7 @@ export class AuthService {
       data: { refreshToken: newRefreshToken, expiresAt },
     })
 
-    const accessToken = signAccessToken({ userId: payload.userId, role: session.user.role })
-    const newRefresh = signRefreshToken({ userId: payload.userId, role: session.user.role })
-
-    // Update the session with the new JWT refresh token
-    await this.prisma.session.update({
-      where: { id: session.id },
-      data: { refreshToken: newRefresh },
-    })
-
-    return { accessToken, refreshToken: newRefresh }
+    return { accessToken, refreshToken: newRefreshToken }
   }
 
   async getMe(userId: string) {

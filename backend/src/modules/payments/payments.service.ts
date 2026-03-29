@@ -58,8 +58,13 @@ export class PaymentsService {
     razorpaySignature: string
   ) {
     // Verify HMAC signature
+    const keySecret = process.env.RAZORPAY_KEY_SECRET
+    if (!keySecret) {
+      throw new Error('Payment verification unavailable — RAZORPAY_KEY_SECRET not configured')
+    }
+
     const expected = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
+      .createHmac('sha256', keySecret)
       .update(`${razorpayOrderId}|${razorpayPaymentId}`)
       .digest('hex')
 
@@ -131,8 +136,13 @@ export class PaymentsService {
   }
 
   async handleWebhook(payload: any, signature: string) {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET
+    if (!webhookSecret) {
+      throw new Error('Webhook verification unavailable — RAZORPAY_WEBHOOK_SECRET not configured')
+    }
+
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET || '')
+      .createHmac('sha256', webhookSecret)
       .update(JSON.stringify(payload))
       .digest('hex')
 

@@ -133,11 +133,21 @@ async function buildApp() {
   app.decorate('redis', redis)
 
   // Health endpoint
-  app.get('/health', async () => ({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-  }))
+  app.get('/health', async () => {
+    let dbStatus = 'ok'
+    try {
+      await prisma.$queryRaw`SELECT 1`
+    } catch {
+      dbStatus = 'error'
+    }
+    return {
+      status: dbStatus === 'ok' ? 'ok' : 'degraded',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      db: dbStatus,
+      redis: redis ? 'connected' : 'not configured',
+    }
+  })
 
   // Routes
   await app.register(authRoutes, { prefix: '/auth' })

@@ -123,7 +123,7 @@ const WHY_CHOOSE = [
 async function getFeaturedListings() {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/listings?limit=8`,
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/listings?limit=8`,
       { cache: 'no-store' }
     )
     if (!res.ok) return []
